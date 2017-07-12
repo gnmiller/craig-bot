@@ -1,0 +1,14 @@
+{
+    "discord":
+    {
+        "token":"DISCORD SECRET KEY"
+    },
+    "youtube":
+    {
+        "token":"YOUTUBE OAUTHv2 KEY"
+    },
+    "bot":
+    {
+        "prefix":"!"
+    }
+}

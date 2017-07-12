@@ -1,0 +1,27 @@
+{
+  "name": "craig-bot",
+  "version": "0.0.1",
+  "description": "discord bot",
+  "main": "bot.js",
+  "scripts": {
+    "test": "poopfeast420"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gnmiller/craig-bot.git"
+  },
+  "keywords": [
+    "discord",
+    "bot"
+  ],
+  "author": "btcraig",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gnmiller/craig-bot/issues"
+  },
+  "homepage": "https://github.com/gnmiller/craig-bot#readme",
+  "dependencies": {
+    "google-auth-library": "^0.10.0",
+    "googleapis": "^20.1.0"
+  }
+}
