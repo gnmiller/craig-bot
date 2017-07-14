@@ -1,13 +1,12 @@
 #!/usr/bin/python
 
-import discord
+import asyncio, json, urllib3, datetime, discord, dateutil
 from apiclient.discovery import build
-import asyncio
-import json
 from datetime import date
 from datetime import timedelta
-import datetime
 from threading import Timer
+import dateutil.parser
+import dateutil.relativedelta
 
 with open( './settings.json' ) as f:
     data = json.load( f )
@@ -20,7 +19,7 @@ me = "BeeStingBot"
 searched = False
 videos = {}
 timer = None
-search_time = -1
+search_time = datetime.datetime.now() - datetime.timedelta( days=90 )
 
 def write_log( log ):
     logfile = open( data["bot"]["logfile"], "a" )
@@ -100,8 +99,29 @@ def youtube_search( term ):
             continue
     searched = True
     search_time = datetime.datetime.now()
+    print( search_time )
     return res_str
 
+def get_got_time():
+    cur = datetime.datetime.now()
+    uri = "http://api.tvmaze.com/shows/82?embed=nextepisode"
+    http = urllib3.PoolManager()
+    response = http.request( 'GET', uri )
+    data = json.loads( response.data.decode( 'utf-8' ) )
+    next_ep = dateutil.parser.parse( data["_embedded"]["nextepisode"]["airstamp"] )
+    next_ep = next_ep.replace( tzinfo=None )
+    diff = dateutil.relativedelta.relativedelta( next_ep, cur )
+    print_str = "```css\nThere are ---\n"
+    if( diff.months > 0 ):
+        print_str+=str(diff.months)+" Months\n"
+    if( diff.days > 0 ):
+        print_str+=str(diff.days)+" Days\n"
+    if( diff.minutes > 0 ):
+        print_str+=str(diff.minutes)+" Minutes and\n"
+    if( diff.seconds > 0 ):
+        print_str+=str(diff.seconds)+" Seconds\n"
+    print_str+="until the next Game of Thrones airs!\n\n```"
+    return print_str
 
 @client.event
 async def on_ready():
@@ -116,8 +136,6 @@ async def on_message( msg ):
         return 
 
     # check for prefix
-    import pdb
-    pdb.set_trace()
     if( msg.content[:len(prefix)].find( prefix ) >= 0 ):
         cmd = msg.content[len(prefix):]
         args = cmd.split()
@@ -130,12 +148,14 @@ async def on_message( msg ):
             write_log( "Got results string: "+search_results )
             await client.send_message( msg.channel, "```css\n"+search_results+"\n```" )
             return
-        elif( datetime.datetime.now() < search_time + timedelta( seconds=15 ) and searched == True ):
+        elif( datetime.datetime.now() < (search_time + timedelta( seconds=15 )) and searched == True ):
             val = int( args[0] )
             if( val > 10 or val < 0 ):
                 await client.send_message( msg.channel, "Invalid selection!" )
             else:
                 await client.send_message( msg.channel, videos[i].title )
+        elif( args[0] == "got" ):
+            await client.send_message( msg.channel, get_got_time() )
         else:
             write_log( "caught unknown cmd" )
             return
