@@ -66,7 +66,7 @@ def youtube_search( term ):
 
     if( searched == True ):
         if( datetime.datetime.now() > search_time + timedelta( seconds=15 ) ):
-            search_helper( msg )
+            search_helper()
             return "Timeout!"
         else:
             return "Search in progress still!"
@@ -84,7 +84,7 @@ def youtube_search( term ):
     ).execute()
 
     count = 0
-    res_str = ""
+    res_str = "```css\n"
     for res in resp.get( "items", [] ):
         if( res["id"]["kind"] == "youtube#video" ):
             count+=1
@@ -99,7 +99,7 @@ def youtube_search( term ):
             continue
     searched = True
     search_time = datetime.datetime.now()
-    print( search_time )
+    res_str+="\n```"
     return res_str
 
 def get_got_time():
@@ -132,10 +132,27 @@ async def on_ready():
 
 @client.event
 async def on_message( msg ):
+    global searched
     if( msg.author.name.find( me ) >= 0 ):
         return 
 
-    # check for prefix
+        # check for prefix
+    if( searched == True ):
+        cur = datetime.datetime.now()
+        if( cur > (search_time + timedelta( seconds=15 ) )):
+            print("timeout")
+            search_helper()
+            return
+        if ( msg.content.isdigit() == False ):
+            await client.send_message( msg.channel, "Invalid selection!" )
+            return
+        val = int( msg.content )
+        if( val > 10 or val < 0 ):
+            await client.send_message( msg.channel, "Invalid selection!" )
+            return
+        await client.send_message( msg.channel, videos[val].title )
+        search_helper()
+
     if( msg.content[:len(prefix)].find( prefix ) >= 0 ):
         cmd = msg.content[len(prefix):]
         args = cmd.split()
@@ -143,17 +160,8 @@ async def on_message( msg ):
             search_str = ""
             for i in args[1:]:
                 search_str+=i+" "
-            print( search_str )
-            search_results = youtube_search( search_str )
-            write_log( "Got results string: "+search_results )
-            await client.send_message( msg.channel, "```css\n"+search_results+"\n```" )
+            await client.send_message( msg.channel, youtube_search( search_str ) )
             return
-        elif( datetime.datetime.now() < (search_time + timedelta( seconds=15 )) and searched == True ):
-            val = int( args[0] )
-            if( val > 10 or val < 0 ):
-                await client.send_message( msg.channel, "Invalid selection!" )
-            else:
-                await client.send_message( msg.channel, videos[i].title )
         elif( args[0] == "got" ):
             await client.send_message( msg.channel, get_got_time() )
         else:
