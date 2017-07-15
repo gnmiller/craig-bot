@@ -7,6 +7,10 @@
     {
         "token":"YOUTUBE OAUTHv2 KEY"
     },
+    "tmdb":
+    {
+        "token":"TMDB v3 TOKEN"
+    },
     "bot":
     {
         "prefix":"!",

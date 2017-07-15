@@ -16,15 +16,18 @@ with open( './settings.json' ) as f:
 client = discord.Client()
 discord_token = data["discord"]["token"]
 youtube_token = data["youtube"]["token"]
+tmdb_token = data["tmdb"]["token"]
+max_time = data["bot"]["timeout"]
 prefix = data["bot"]["prefix"]
 me = "BeeStingBot"
 searched = False
-videos = {}
+results = {}
 timer = None
 search_time = datetime.datetime.now() - datetime.timedelta( days=90 )
 search_msg = None
 last_msg = None
 squad = []
+mode = ""
 
 
 def write_log( log ):
@@ -40,18 +43,29 @@ def write_log( log ):
 def search_helper():
     """reset search"""
     global searched
-    global videos
+    global results 
     global timer
     global search_time
+    global mode
     global search_msg
     search_time = None
+    mode = ""
     searched = False
-    videos = {}
+    results = {}
     timer = None
     search_msg = None
     return
 
-class yt_video:
+def timeout():
+    now = datetime.datetime.now()
+    if( searched == False ):
+        return False
+    if( now > ( search_time + timedelta( seconds=max_time ) ) ):
+        return True
+    else:
+        return False
+
+class video:
     """simple container for yt video data"""
     title = ""
     video_id = -1
@@ -76,20 +90,20 @@ def youtube_search( term ):
     """Search using YouTube's API"""
     global searched
     global timer
-    global videos
+    global results
     global search_time
+    global mode
 
-    if( searched == True ):
-        if( datetime.datetime.now() > search_time + timedelta( seconds=15 ) ):
-            search_helper()
-            return "Timeout!"
-        else:
-            return "Search in progress still!"
+    if( timeout() == True ):
+        return "Timeout!"
+    elif( searched == True ):
+        return "Search in progress still!"
     else:
-        videos = {}
+        results = {}
         timer = None
         searched = False
         search_time  = None
+        mode = "youtube"
 
     youtube = build( "youtube", "v3", developerKey=youtube_token )
     resp = youtube.search().list(
@@ -106,8 +120,8 @@ def youtube_search( term ):
             res_str += str(count)+". "+res["snippet"]["title"]+"\n"
             title = res["snippet"]["title"]
             video_id = res["id"]["videoId"]
-            vid = yt_video( title, video_id )
-            videos[count] = vid
+            vid = video( title, video_id )
+            results[count] = vid
             if( count >= 10 ):
                 break
         else:
@@ -166,6 +180,48 @@ def get_squad():
             m = bee_sting_member( u )
             squad.append( m )
 
+def tmdb_search( term ):
+    global searched
+    global timer
+    global results
+    global search_time
+    global mode
+
+    if( timeout() == True ):
+        return "Timeout!"
+    elif( searched == True ):
+        return "Search in progress still!"
+    else:
+        results = {}
+        timer = None
+        searched = False
+        search_time  = None
+        mode = "tmdb"
+    
+        uri = "https://api.themoviedb.org/3/search/movie?api_key="+tmdb_token+"&query="+term
+        searched = True
+        search_time = datetime.datetime.now()
+        http = urllib3.PoolManager()
+        response = http.request( 'GET', uri )
+        data = json.loads( response.data.decode( 'utf-8' ) )
+        count = 0
+        res_str = "```css\n"
+        for res in data.get( "results", [] ):
+            title = res["title"]
+            video_id = res["id"]
+            rating = res["vote_average"]
+            rating_count = res["vote_count"]
+            year = res["release_date"][0:4]
+            if( count >= 10 ):
+                break
+            count+=1
+            res_str += str(count)+". "+title+" ("+str(year)+") -- "+str(rating)+"/10 ("+str(rating_count)+")\n"
+            vid = video( title, video_id )
+            results[count] = vid
+        res_str += "```"
+        return res_str
+
+
 @client.event
 async def on_member_join():
     global squad
@@ -174,6 +230,7 @@ async def on_member_join():
 @client.event
 async def on_member_update( before, after ):
     global squad
+    timeout()
     for m in squad:
         if m.me.name == after.name:
             m.time = datetime.datetime.now()
@@ -199,24 +256,26 @@ async def on_message( msg ):
 
         # check for prefix
     if( searched == True ):
-        cur = datetime.datetime.now()
         # check if sender matches whomever searched
         if( search_msg.author.name.find( msg.author.name ) != 0 ):
             return
         # check timeout
-        if( cur > (search_time + timedelta( seconds=15 ) )):
+        if( timeout() == True ):
             search_helper()
             return
         # check int
         if ( msg.content.isdigit() == False ):
-            await client.send_message( msg.channel, "Invalid selection!" )
+            #await client.send_message( msg.channel, "Invalid selection!" )
             return
         val = int( msg.content )
         # check range
         if( val > 10 or val < 0 ):
-            await client.send_message( msg.channel, "Invalid selection!" )
+            #await client.send_message( msg.channel, "Invalid selection!" )
             return
-        ret_uri = "https://www.youtube.com/watch?v="+videos[val].video_id
+        if( mode == "youtube" ):
+            ret_uri = "Selected video -"+str(val)+"-\nTitle: "+results[val].title+"\nhttps://www.youtube.com/watch?v="+str(results[val].video_id)
+        elif( mode == "tmdb" ):
+            ret_uri = "Selected video -"+str(val)+"-\nTitle: "+results[val].title+"\nhttps://www.themoviedb.org/movie/"+str(results[val].video_id)
         last_msg = await client.edit_message( last_msg, ret_uri )
         search_helper()
 
@@ -235,6 +294,13 @@ async def on_message( msg ):
             last_msg = await client.send_message( msg.channel, get_got_time() )
         elif( args[0] == "squad" ):
             last_msg = await client.send_message( msg.channel, the_squad() ) 
+        elif( args[0] == "movie" ):
+            search_str = ""
+            search_msg = msg
+
+            for i in args[1:]:
+                search_str +=i+"+"
+            last_msg = await client.send_message( msg.channel, tmdb_search( search_str ) )
         else:
             write_log( "caught unknown cmd" )
             return
