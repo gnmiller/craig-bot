@@ -9,6 +9,8 @@
     },
     "bot":
     {
-        "prefix":"!"
+        "prefix":"!",
+        "timeout":"TIMEOUT TIME",
+        "logfile":"/path/to/logs"
     }
 }
