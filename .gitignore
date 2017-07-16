@@ -4,3 +4,4 @@ youtube_secret.json
 *.log
 debug.sh
 .gitignore
+bot-start.sh

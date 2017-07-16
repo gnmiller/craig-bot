@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3.6
 
 import asyncio, json, urllib3, datetime, discord, dateutil
 from apiclient.discovery import build
@@ -9,7 +9,9 @@ import pdb
 import dateutil.parser
 import dateutil.relativedelta
 
-with open( './settings.json' ) as f:
+import os
+path = os.path.dirname(os.path.realpath(__file__))
+with open( path+'/settings.json' ) as f:
     data = json.load( f )
 
 # init global vars...
@@ -65,20 +67,20 @@ def timeout():
     else:
         return False
 
-class video:
-    """simple container for yt video data"""
-    title = ""
-    video_id = -1
+class result:
+    """simple container for search results"""
+    name = ""
+    id = -1
 
     def __init__(self,t,i):
         self.title = str(t)
-        self.video_id = str(i)
+        self.id = str(i)
 
     def set_title( self, t ):
         self.title = t
 
     def set_id( self, i ):
-        self.video_id = i
+        self.id = i
 
 class bee_sting_member():
     """container for discord member's and time"""
@@ -120,7 +122,7 @@ def youtube_search( term ):
             res_str += str(count)+". "+res["snippet"]["title"]+"\n"
             title = res["snippet"]["title"]
             video_id = res["id"]["videoId"]
-            vid = video( title, video_id )
+            vid = result( title, video_id )
             results[count] = vid
             if( count >= 10 ):
                 break
@@ -216,11 +218,57 @@ def tmdb_search( term ):
                 break
             count+=1
             res_str += str(count)+". "+title+" ("+str(year)+") -- "+str(rating)+"/10 ("+str(rating_count)+")\n"
-            vid = video( title, video_id )
+            vid = result( title, video_id )
             results[count] = vid
         res_str += "```"
         return res_str
 
+def ffxivdb_search( term ):
+    global searched
+    global timer
+    global results
+    global search_time
+    global mdoe
+
+    if( timeout() == True ):
+        return "Timeout!"
+    elif( searched == True ):
+        return "Search still in progress!"
+    else:
+        results = {}
+        timer = None
+        searched = False
+        search_time = None
+        mode = "ff"
+
+        uri = "https://api.xivdb.com/search?string="+term
+        searched = True
+        search_time = datetime.datetime.now()
+        http = urllib3.PoolManager()
+        response = http.request( 'GET', uri )
+        data = json.loads( response.data.decode( 'utf-8' ) )
+        count = 0
+        res_str = ""
+        import pdb
+        pdb.set_trace()
+        if( data.get( "characters", [] )["results"]["total"] == 1 ):
+            res_str += "Only one result returned!\n"
+            res_str += "https://api.xivdb.com/characters/"+str( data.get( "characters", [] )["results"]["id"] )+"\n"
+            search_helper()
+            return
+        res_str = "```css\n"
+        for res in data.get( "characters", [] ):
+            name = res["results"]["name"]
+            id = res["results"]["id"]
+            server = res["results"]["server"]
+            if( count >= 10 ):
+                break
+            count+=1
+            res_str += str(count)+". "+name+" ("+server+")\n"
+            tmp = result( name+" - ("+server+")", id )
+            results[count] = tmp
+        res_str += "```"
+        return res_str
 
 @client.event
 async def on_member_join():
@@ -265,17 +313,17 @@ async def on_message( msg ):
             return
         # check int
         if ( msg.content.isdigit() == False ):
-            #await client.send_message( msg.channel, "Invalid selection!" )
             return
         val = int( msg.content )
         # check range
         if( val > 10 or val < 0 ):
-            #await client.send_message( msg.channel, "Invalid selection!" )
             return
         if( mode == "youtube" ):
-            ret_uri = "Selected video -"+str(val)+"-\nTitle: "+results[val].title+"\nhttps://www.youtube.com/watch?v="+str(results[val].video_id)
+            ret_uri = "Selected video -"+str(val)+"-\nTitle: "+results[val].name+"\nhttps://www.youtube.com/watch?v="+str(results[val].id)
         elif( mode == "tmdb" ):
-            ret_uri = "Selected video -"+str(val)+"-\nTitle: "+results[val].title+"\nhttps://www.themoviedb.org/movie/"+str(results[val].video_id)
+            ret_uri = "Selected video -"+str(val)+"-\nTitle: "+results[val].name+"\nhttps://www.themoviedb.org/movie/"+str(results[val].id)
+        elif( mode == "ff" ):
+            ret_uri = "Selected character - "+str(val)+"-\nName: "+results[val].name+"\nhttps://api.xivdb.com/characters/"+str(results[val].id)
         last_msg = await client.edit_message( last_msg, ret_uri )
         search_helper()
 
@@ -292,17 +340,27 @@ async def on_message( msg ):
             return
         elif( args[0] == "got" ):
             last_msg = await client.send_message( msg.channel, get_got_time() )
+            return
         elif( args[0] == "squad" ):
             last_msg = await client.send_message( msg.channel, the_squad() ) 
+            return
         elif( args[0] == "movie" ):
             search_str = ""
             search_msg = msg
 
             for i in args[1:]:
-                search_str +=i+"+"
+                search_str += i+"+"
             last_msg = await client.send_message( msg.channel, tmdb_search( search_str ) )
+            return
+        elif( args[0] == "ff" ):
+            search_str = ""
+            search_msg = msg
+
+            for i in args[1:]:
+                search_str += i+"+"
+            last_msg = await client.send_message( msg.channel, ffxivdb_search( search_str ) )
+            return
         else:
-            write_log( "caught unknown cmd" )
             return
 
 client.run( discord_token ) 
