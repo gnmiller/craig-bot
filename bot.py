@@ -23,7 +23,7 @@ date_format = "%d/%m/%y %I:%M %p"
 
 
 def get_got_time():
-    """fetch time to next got episode"""
+    """Returns a formatted string with the time until the next and time from the previous GoT episode. Episode name is also returned in the string."""
     cur = datetime.datetime.now()
     uri = "http://api.tvmaze.com/shows/82?embed[]=nextepisode&embed[]=previousepisode"
     http = urllib3.PoolManager()
