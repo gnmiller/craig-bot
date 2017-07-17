@@ -1,4 +1,7 @@
-import discord, asyncio, datetime, json, pytz, os
+import discord, asyncio, datetime, json, pytz, os, urllib3
+import dateutil.parser
+import dateutil.relativedelta
+from subprocess import call
 from craig_server import craig_server as __serv
 from craig_server import craig_user as __user
 
@@ -16,30 +19,46 @@ max_time = settings["bot"]["timeout"]
 my_name = settings["bot"]["my_name"]
 last_msg = None
 started = False
+date_format = "%d/%m/%y %I:%M %p"
 
 
 def get_got_time():
     """fetch time to next got episode"""
     cur = datetime.datetime.now()
-    uri = "http://api.tvmaze.com/shows/82?embed=nextepisode"
+    uri = "http://api.tvmaze.com/shows/82?embed[]=nextepisode&embed[]=previousepisode"
     http = urllib3.PoolManager()
     response = http.request( 'GET', uri )
     data = json.loads( response.data.decode( 'utf-8' ) )
     next_ep = dateutil.parser.parse( data["_embedded"]["nextepisode"]["airstamp"] )
+    next_ep_name = data["_embedded"]["nextepisode"]["name"]
+    prev_ep = dateutil.parser.parse( data["_embedded"]["previousepisode"]["airstamp"] )
+    prev_ep_name = data["_embedded"]["previousepisode"]["name"]
     cur = pytz.utc.localize( cur )
-    diff = dateutil.relativedelta.relativedelta( next_ep, cur )
-    print_str = "```css\nThere are ---\n"
-    if( diff.months > 0 ):
-        print_str+=str(diff.months)+" Months\n"
-    if( diff.days > 0 ):
-        print_str+=str(diff.days)+" Days\n"
-    if( diff.hours > 0 ):
-        print_str+=str(diff.hours)+" Hours\n"
-    if( diff.minutes > 0 ):
-        print_str+=str(diff.minutes)+" Minutes and\n"
-    if( diff.seconds > 0 ):
-        print_str+=str(diff.seconds)+" Seconds\n"
-    print_str+="until the next Game of Thrones airs!\n\n```"
+    next_diff = dateutil.relativedelta.relativedelta( next_ep, cur )
+    prev_diff = dateutil.relativedelta.relativedelta( prev_ep, cur )
+    print_str = "```smalltalk\nLast Episode: "+prev_ep_name+" aired "
+    if (abs(prev_diff.months) > 0):
+        print_str+=str(abs(prev_diff.months))+" months "
+    if (abs(prev_diff.days) > 0):
+        print_str+=str(abs(prev_diff.days))+" days "
+    if (abs(prev_diff.hours) > 0):
+        print_str+=str(abs(prev_diff.hours))+" hours "
+    if (abs(prev_diff.minutes) > 0):
+        print_str+=str(abs(prev_diff.minutes))+" minutes and "
+    if (abs(prev_diff.seconds) > 0):
+        print_str+=str(abs(prev_diff.seconds))+" seconds ago\n"
+    print_str+="Next Episode: "+next_ep_name+" airs in "
+    if next_diff.months > 0 :
+        print_str+=str(next_diff.months)+" months "
+    if next_diff.days > 0 :
+        print_str+=str(next_diff.days)+" days "
+    if next_diff.hours > 0 :
+        print_str+=str(next_diff.hours)+" hours "
+    if next_diff.minutes > 0 :
+        print_str+=str(next_diff.minutes)+" minutes and "
+    if next_diff.seconds > 0 :
+        print_str+=str(next_diff.seconds)+" seconds\n"
+    print_str += "```"
     return print_str
 
 serv_arr = []
@@ -79,6 +98,7 @@ async def on_member_update( before, after ):
 async def on_message( msg ):
     global last_msg
     global started
+    
     if not started:
         return
     
@@ -95,7 +115,9 @@ async def on_message( msg ):
     if cur_serv.search_helper.timeout() == True :
         cur_serv.search_helper.clear_search()
         await client.send_message( msg.channel, "Timeout!" )
-        
+    
+    not_auth = "You are not authorized to send this command."
+    
     # main processor
     if (msg.content[:len(prefix)].find( prefix ) >= 0):
         args = msg.content[len(prefix):].split()
@@ -106,12 +128,24 @@ async def on_message( msg ):
             res = []
             role = None
             res = s.get_role_status( args[1] )
+            if res == []:
+                last_msg = await client.send_message( msg.channel, "No users with that role." )
+                return
             for r in cur_serv.me.roles :
                 if r.name == args[1] :
                     role = r
-            ret_str = "Current Status of <@&"+role.id+"> :: \n```css\n"
+            # only allowed if youre a member
+            allow = False
+            for r in msg.author.roles :
+                if r.name == role.name :
+                    allow = True
+            if not allow :
+                last_msg = await client.send_message( msg.channel, "```You are disallowed from this command because you are not a member of <"+role.name+">\n```" )
+                return
+            ret_str = "Current Status of <@&"+role.id+"> :: \n```smalltalk\n"
             for u in res :
-                ret_str += u.me.name+" | Status: "+str(u.status)+" | Last Updated: "+u.time.strftime( "%c" )+"\n"
+                ret_str += u.me.name+" | Status: "+str(u.status)+" | Last Updated: "
+                ret_str += u.time.strftime( date_format )+"\n"
             ret_str += "```"
             last_msg = await client.send_message( msg.channel, ret_str )
             return
@@ -123,9 +157,53 @@ async def on_message( msg ):
             ret_str = cur_serv.search( search_str, "youtube", youtube_key, msg )
             last_msg = await client.send_message( msg.channel, ret_str )
             return
-        elif args[0] == "help" or args[0] == "h":
-            await client.send_message( msg.author, "NYI" )
+        elif args[0] == "tmdb" :
+            search_str = ""
+            for arg in args[1:]:
+                search_str += arg+"+"
+            search_str = search_str[:len(search_str)-1]
+            ret_str = cur_serv.search( search_str, "tmdb", tmdb_key, msg )
+            last_msg = await client.send_message( msg.channel, ret_str )
             return
+        elif args[0] == "got" :
+            last_msg = await client.send_message( msg.channel, get_got_time() )
+            return
+        elif args[0] == "help" or args[0] == "h" :
+            ret_str = "```css\nBeeStingBot help menu\nBot prefix: "+prefix+"\nCommands\n------------```\n```css\n"
+            ret_str += prefix+"yt <search query>\n"+"        Search YouTube for a video.```\n```css\n"
+            ret_str += prefix+"tmdb <search query>\n"+"        Search TMDb for a movie.```\n```css\n"
+            ret_str += prefix+"got\n        Print brief info on the most recent and next Game of Thrones episode.```\n```css\n"
+            ret_str += prefix+"cr <role_name>\n        Print out status on users that belong to role_name\n            Only information since the bot was last restarted is kept.```"
+            await client.send_message( msg.author, ret_str )
+            return
+        elif args[0] == "restart" :
+            if msg.author.name == "btcraig" :
+                last_msg = await client.send_message( msg.channel, "Restarting bot." )
+                call( ["service", "craig-bot", "restart"] )
+                return
+            else:
+                last_msg = await client.send_message( msg.channel, not_auth )
+                return
+        elif args[0] == "stop" :
+            if msg.author.name == "btcraig" :
+                last_msg = await client.send_message( msg.channel, "Stopping bot." )
+                call( ["service", "craig-bot", "stop"] )
+                return
+            else:
+                last_msg = await client.send_message( msg.channel, not_auth )
+                return
+        elif args[0] == "status" :
+            if msg.author.name == "btcraig" :
+                my_pid = os.getpid()
+                created = os.path.getmtime( "/proc/"+str(my_pid) )
+                creat_str = "```smalltalk\nBot running with PID "+str(my_pid)+" since "
+                creat_str += datetime.datetime.fromtimestamp( int(created) ).strftime( date_format )
+                creat_str += "```\n"
+                last_msg = await client.send_message( msg.channel, creat_str )
+                return
+            else:
+                last_msg = await client.send_message( msg.channel, not_auth )
+                return
         else:
             return
         
