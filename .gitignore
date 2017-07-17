@@ -1,7 +1,4 @@
 settings.json
-youtube_secret.json
 *swp
 *.log
-debug.sh
-.gitignore
-bot-start.sh
+__pycache__
