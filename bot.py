@@ -329,8 +329,7 @@ async def on_message( msg ):
         search_helper()
 
     if( msg.content[:len(prefix)].find( prefix ) >= 0 ):
-        cmd = msg.content[len(prefix):]
-        args = cmd.split()
+        args = msg.content[len(prefix):].split()
         if( args[0] == "yt" ):
             search_str = ""
             search_msg = msg

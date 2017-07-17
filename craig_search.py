@@ -11,7 +11,8 @@ class result:
         self.id = id
 
 class search:
-    def __init__( self, timeout ):
+    def __init__( self, name, timeout ):
+        self.serv_name = name
         self.searched = False
         self.search_time = datetime.datetime.now()
         self.search_msg = None
@@ -23,7 +24,7 @@ class search:
         now = datetime.datetime.now()
         if( self.searched == False ):
             return False
-        elif( now > ( self.search_time + timedelta( seconds = self.max_time ) ):
+        elif( now > ( self.search_time + timedelta( seconds = self.max_time ) ) ):
             return True
         else:
             return False
@@ -34,8 +35,9 @@ class search:
         self.search_msg = None
         self.results = {}
         self.mode = "none"
+        self.search_msg = None
 
-    def youtube_search( self, term, apikey ):
+    def youtube_search( self, term, apikey, msg ):
         """Search YouTube for 'term', authenticating with 'apikey' and returning a formatted string of results"""
         if( self.timeout() == True ):
             return "timeout"
@@ -51,7 +53,7 @@ class search:
             if res["id"]["kind"] == "youtube#video" :
                 count+=1
                 res_str+=str(count)+". "+res["snippet"]["title"]+"\n"
-                result[count] = result( res["snippet"]["id"], res["id"]["videoId"] )
+                self.results[count] = result( res["snippet"]["title"], res["id"]["videoId"] )
                 if count >= 10 :
                     break
             else:
@@ -59,10 +61,11 @@ class search:
         self.mode = "youtube"
         self.searched = True
         self.search_time = datetime.datetime.now()
+        self.search_msg = msg
         res_str+="```"
         return res_str
 
-    def tmdb_search( self, term, apikey ):
+    def tmdb_search( self, term, apikey, msg ):
         """Search tmdb for 'term' authenticating with 'apikey' and returning a formatted results string"""
         if( self.timeout() == True ):
             return "timeout"
@@ -90,20 +93,22 @@ class search:
 
         self.searched = True
         self.mode = "tmdb"
+        self.search_msg = msg
         return res_str
 
-    def finalize_search( self, val  ):
+    def finalize_search( self, val ):
         """Select which results to use"""
         if( self.timeout() == True ):
             return "timeout"
         if( self.searched == False ):
             return "why did you do this?"
-
         if self.mode == "youtube" :
-            return ret_uri = "Selected video -"+str(val)+"-\nTitle: "+self.results[val].name+"\nhttps://www.youtube.com/watch?v="+str(self.results[val].id)
+            ret_str = "Selected video -" +val+ "-\nTitle: "+self.results[int(val)].name+"\nhttps://www.youtube.com/watch?v="+str(self.results[int(val)].id)
         elif self.mode == "tmdb" :
-            return ret_uri = "Selected video -"+str(val)+"-\nTitle: "+self.results[val].name+"\nhttps://www.themoviedb.org/movie/"+str(results[val].id)
+            ret_str = "Selected video -"+val+"-\nTitle: "+self.results[int(val)].name+"\nhttps://www.themoviedb.org/movie/"+str(results[int(val)].id)
         elif self.mode == "ff" : #NYI
-            return ret_uri = "Selected character - "+str(val)+"-\nName: "+self.results[val].name+"\nhttps://api.xivdb.com/characters/"+str(results[val].id)
+            ret_str = "Selected character - "+val+"-\nName: "+self.results[val].name+"\nhttps://api.xivdb.com/characters/"+str(results[int(val)].id)
         else:
             return "what"
+        self.search_clear()
+        return ret_str
