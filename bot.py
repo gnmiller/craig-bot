@@ -8,6 +8,7 @@ from threading import Timer
 import pdb
 import dateutil.parser
 import dateutil.relativedelta
+import pytz
 
 import os
 path = os.path.dirname(os.path.realpath(__file__))
@@ -141,7 +142,7 @@ def get_got_time():
     response = http.request( 'GET', uri )
     data = json.loads( response.data.decode( 'utf-8' ) )
     next_ep = dateutil.parser.parse( data["_embedded"]["nextepisode"]["airstamp"] )
-    next_ep = next_ep.replace( tzinfo=None )
+    cur = pytz.utc.localize( cur )
     diff = dateutil.relativedelta.relativedelta( next_ep, cur )
     print_str = "```css\nThere are ---\n"
     if( diff.months > 0 ):
