@@ -149,6 +149,8 @@ def get_got_time():
         print_str+=str(diff.months)+" Months\n"
     if( diff.days > 0 ):
         print_str+=str(diff.days)+" Days\n"
+    if( diff.hours > 0 ):
+        print_str+=str(diff.hours)+" Hours\n"
     if( diff.minutes > 0 ):
         print_str+=str(diff.minutes)+" Minutes and\n"
     if( diff.seconds > 0 ):
@@ -250,8 +252,6 @@ def ffxivdb_search( term ):
         data = json.loads( response.data.decode( 'utf-8' ) )
         count = 0
         res_str = ""
-        import pdb
-        pdb.set_trace()
         if( data.get( "characters", [] )["results"]["total"] == 1 ):
             res_str += "Only one result returned!\n"
             res_str += "https://api.xivdb.com/characters/"+str( data.get( "characters", [] )["results"]["id"] )+"\n"
@@ -360,6 +360,9 @@ async def on_message( msg ):
             for i in args[1:]:
                 search_str += i+"+"
             last_msg = await client.send_message( msg.channel, ffxivdb_search( search_str ) )
+            return
+        elif( args[0] == "deeznuts" ):
+            last_msg = await client.send_message( msg.channel, "Got 'em!\nhttps://www.youtube.com/watch?v=5LlQNty_C8s" )
             return
         else:
             return
