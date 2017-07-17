@@ -1,11 +1,11 @@
-import discord.py
-import search.py
+import discord
+import search
 
 class server:
-    def __init__(self, serv ):
+    def __init__( self, serv ):
         self.me = serv
         self.search_tracker = search( serv.name, serv,name )
-        self.users = {}
+        self.users = []
         self.apikeys = {}
 
     def set_key( self, key, key_name ):
