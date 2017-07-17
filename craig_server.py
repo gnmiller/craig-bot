@@ -17,7 +17,6 @@ class craig_server:
         return ret_users
     
     def search( self, term, mode, apikey, msg ):
-        print( term )
         if mode == "youtube":
             return self.search_helper.youtube_search( term, apikey, msg )
         if mode == "tmdb":

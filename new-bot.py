@@ -123,6 +123,8 @@ async def on_message( msg ):
             ret_str = cur_serv.search( search_str, "youtube", youtube_key, msg )
             last_msg = await client.send_message( msg.channel, ret_str )
             return
+        elif args[0] == "got":
+            last_msg = await client.send_message( msg.channel, get_got_time() )
         elif args[0] == "help" or args[0] == "h":
             await client.send_message( msg.author, "NYI" )
             return
