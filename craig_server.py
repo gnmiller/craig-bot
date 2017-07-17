@@ -1,6 +1,7 @@
 import discord
 from craig_search import search
 import datetime
+import pytz
 
 class craig_server:
     def __init__( self, serv, timeout ):
@@ -12,7 +13,7 @@ class craig_server:
         ret_users = []
         for u in self.users :
             for r in u.me.roles :
-                if r.name == role_name :
+                if r.name == role_name.lower() :
                     ret_users.append( u )
         return ret_users
     

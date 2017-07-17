@@ -48,7 +48,7 @@ class search:
         response = youtube.search().list( q=term, part="id,snippet", maxResults=50 ).execute()
 
         count = 0
-        res_str="```css\n"
+        res_str="```smalltalk\n"
         for res in response.get( "items", [] ):
             if res["id"]["kind"] == "youtube#video" :
                 count+=1
@@ -72,28 +72,30 @@ class search:
         if( self.searched == True ):
             return "previous search still in progress"
         self.search_clear()
-        uri = "https://api.themoviedb.org/3/search/movie?api_key="+api_key
+        uri = "https://api.themoviedb.org/3/search/movie?api_key="+apikey
         uri += "&query="+term
         http=urllib3.PoolManager()
         response = http.request( "GET", uri )
         data=json.loads( response.data.decode( 'utf-8' ) )
         count=0
-        res_str="```css\n"
+        res_str="```smalltalk\n"
         for res in data.get( "results", [] ):
             rating = res["vote_average"]
-            rating_count = ["vote_count"]
+            rating_count = res["vote_count"]
             year = res["release_date"][0:4]
             tmp = result( res["title"], res["id"] )
             if count >= 10 :
                 break
             count += 1
-            res_str += str(count)+". "+tmp.title+" ("+str(year)+" -- "+str(rating)+"/10 ("
-            res_str += rating_count+" votes)\n"
-            results[count] = tmp
+            res_str += str(count)+". "+tmp.name+" ("+str(year)+" -- "+str(rating)+"/10 ("
+            res_str += str(rating_count)+" votes)\n"
+            self.results[count] = tmp
 
         self.searched = True
         self.mode = "tmdb"
         self.search_msg = msg
+        self.search_time = datetime.datetime.now()
+        res_str+="```"
         return res_str
 
     def finalize_search( self, val ):
@@ -105,9 +107,9 @@ class search:
         if self.mode == "youtube" :
             ret_str = "Selected video -" +val+ "-\nTitle: "+self.results[int(val)].name+"\nhttps://www.youtube.com/watch?v="+str(self.results[int(val)].id)
         elif self.mode == "tmdb" :
-            ret_str = "Selected video -"+val+"-\nTitle: "+self.results[int(val)].name+"\nhttps://www.themoviedb.org/movie/"+str(results[int(val)].id)
+            ret_str = "Selected video -"+val+"-\nTitle: "+self.results[int(val)].name+"\nhttps://www.themoviedb.org/movie/"+str(self.results[int(val)].id)
         elif self.mode == "ff" : #NYI
-            ret_str = "Selected character - "+val+"-\nName: "+self.results[val].name+"\nhttps://api.xivdb.com/characters/"+str(results[int(val)].id)
+            ret_str = "Selected character - "+val+"-\nName: "+self.results[val].name+"\nhttps://api.xivdb.com/characters/"+str(self.results[int(val)].id)
         else:
             return "what"
         self.search_clear()
