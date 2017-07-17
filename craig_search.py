@@ -41,7 +41,7 @@ class search:
         self.search_msg = None
 
     def youtube_search( self, term, apikey, msg ):
-        """Authenticate to the YouTube API  using apikey and perform a search with term returning a formatted string result."""v
+        """Authenticate to the YouTube API  using apikey and perform a search with term returning a formatted string result."""
         if( self.timeout() == True ):
             return "timeout"
         if( self.searched == True ):

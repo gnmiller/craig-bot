@@ -62,6 +62,7 @@ def get_got_time():
     return print_str
 
 serv_arr = []
+authorized = ["btcraig"]
 @client.event
 async def on_ready():
     global started
@@ -76,6 +77,7 @@ async def on_ready():
         for u in s.me.members :
             tmp = __user( u, u.status, datetime.datetime.now() )
             s.users.append( tmp )
+
     print( "startup finished" )
     started = True
 
@@ -118,23 +120,36 @@ async def on_message( msg ):
     
     not_auth = "You are not authorized to send this command."
     
-    # main processor
+    now = pytz.utc.localize( datetime.datetime.now() )
+
+    # figure out what we're doing and do it
     if (msg.content[:len(prefix)].find( prefix ) >= 0):
         args = msg.content[len(prefix):].split()
-        if args[0] == "cr" :
-            if (len(args) != 2) :
+
+        if args[0] == "qr" : # query role
+            
+            # check we got exactly 2 args
+            if len(args) != 2 :
                 last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
                 return
+
+            if cur_serv.last_used[ "qr" ] <= ( now + timedelta( minutes=-5 ) ) :
+                await client.send_message( msg.channel, "Slow down!\n" )
+                return
+
             res = []
             role = None
             res = s.get_role_status( args[1] )
-            if res == []:
+            if res == []: # role size == 0
                 last_msg = await client.send_message( msg.channel, "No users with that role." )
                 return
+
+            # get the role object
             for r in cur_serv.me.roles :
                 if r.name == args[1] :
                     role = r
-            # only allowed if youre a member
+            
+            # only allowed if youre in the group
             allow = False
             for r in msg.author.roles :
                 if r.name == role.name :
@@ -142,6 +157,7 @@ async def on_message( msg ):
             if not allow :
                 last_msg = await client.send_message( msg.channel, "```You are disallowed from this command because you are not a member of <"+role.name+">\n```" )
                 return
+
             ret_str = "Current Status of <@&"+role.id+"> :: \n```smalltalk\n"
             for u in res :
                 ret_str += u.me.name+" | Status: "+str(u.status)+" | Last Updated: "
@@ -150,22 +166,29 @@ async def on_message( msg ):
             last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "yt" :
+            # ' ' -> '+'
             search_str = ""
             for arg in args[1:]:
                 search_str += arg+"+"
             search_str = search_str[:len(search_str)-1]
+
             ret_str = cur_serv.search( search_str, "youtube", youtube_key, msg )
             last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "tmdb" :
+            # ' ' -> '+'
             search_str = ""
             for arg in args[1:]:
                 search_str += arg+"+"
             search_str = search_str[:len(search_str)-1]
+
             ret_str = cur_serv.search( search_str, "tmdb", tmdb_key, msg )
             last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "got" :
+            if cur_serv.last_used[ "got" ] < ( now + timedelta( minutes=-5 ) ):
+                await client.send_message( msg.channel, "Slow down!\n" )
+                return
             last_msg = await client.send_message( msg.channel, get_got_time() )
             return
         elif args[0] == "help" or args[0] == "h" :
@@ -173,37 +196,37 @@ async def on_message( msg ):
             ret_str += prefix+"yt <search query>\n"+"        Search YouTube for a video.```\n```css\n"
             ret_str += prefix+"tmdb <search query>\n"+"        Search TMDb for a movie.```\n```css\n"
             ret_str += prefix+"got\n        Print brief info on the most recent and next Game of Thrones episode.```\n```css\n"
-            ret_str += prefix+"cr <role_name>\n        Print out status on users that belong to role_name\n            Only information since the bot was last restarted is kept.```"
-            await client.send_message( msg.author, ret_str )
+            ret_str += prefix+"qr <role_name>\n        Print out status on users that belong to role_name\n            Only information since the bot was last restarted is kept.```"
+            last_msg = await client.send_message( msg.author, ret_str )
             return
         elif args[0] == "restart" :
-            if msg.author.name == "btcraig" :
-                last_msg = await client.send_message( msg.channel, "Restarting bot." )
-                call( ["service", "craig-bot", "restart"] )
-                return
-            else:
-                last_msg = await client.send_message( msg.channel, not_auth )
-                return
+            for a in authorized:
+                if msg.author.name == a:
+                    last_msg = await client.send_message( msg.channel, "Restarting bot." )
+                    call( ["service", "craig-bot", "restart"] )
+                    return
+            last_msg = await client.send_message( msg.channel, not_auth )
+            return
         elif args[0] == "stop" :
-            if msg.author.name == "btcraig" :
-                last_msg = await client.send_message( msg.channel, "Stopping bot." )
-                call( ["service", "craig-bot", "stop"] )
-                return
-            else:
-                last_msg = await client.send_message( msg.channel, not_auth )
-                return
+            for a in authorized:
+                if msg.author.name == a:
+                    last_msg = await client.send_message( msg.channel, "Stopping bot." )
+                    call( ["service", "craig-bot", "stop"] )
+                    return
+            last_msg = await client.send_message( msg.channel, not_auth )
+            return
         elif args[0] == "status" :
-            if msg.author.name == "btcraig" :
-                my_pid = os.getpid()
-                created = os.path.getmtime( "/proc/"+str(my_pid) )
-                creat_str = "```smalltalk\nBot running with PID "+str(my_pid)+" since "
-                creat_str += datetime.datetime.fromtimestamp( int(created) ).strftime( date_format )
-                creat_str += "```\n"
-                last_msg = await client.send_message( msg.channel, creat_str )
-                return
-            else:
-                last_msg = await client.send_message( msg.channel, not_auth )
-                return
+            for a in authorized:
+                if msg.author.name == a:
+                    my_pid = os.getpid()
+                    created = os.path.getmtime( "/proc/"+str(my_pid) )
+                    creat_str = "```smalltalk\nBot running with PID "+str(my_pid)+" since "
+                    creat_str += datetime.datetime.fromtimestamp( int(created) ).strftime( date_format )
+                    creat_str += "```\n"
+                    last_msg = await client.send_message( msg.channel, creat_str )
+                    return
+            last_msg = await client.send_message( msg.channel, not_auth )
+            return
         else:
             return
         
