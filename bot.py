@@ -1,138 +1,22 @@
-#!/usr/bin/python3.6
+import discord, asyncio, datetime, json, pytz, os
+from craig_server import craig_server as __serv
+from craig_server import craig_user as __user
 
-import asyncio, json, urllib3, datetime, discord, dateutil
-from apiclient.discovery import build
-from datetime import date
-from datetime import timedelta
-from threading import Timer
-import pdb
-import dateutil.parser
-import dateutil.relativedelta
-import pytz
-
-import os
+# load settings file
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
-    data = json.load( f )
-
-# init global vars...
+    settings = json.load( f )
+    
 client = discord.Client()
-discord_token = data["discord"]["token"]
-youtube_token = data["youtube"]["token"]
-tmdb_token = data["tmdb"]["token"]
-max_time = data["bot"]["timeout"]
-prefix = data["bot"]["prefix"]
-me = "BeeStingBot"
-searched = False
-results = {}
-timer = None
-search_time = datetime.datetime.now() - datetime.timedelta( days=90 )
-search_msg = None
+discord_key = settings["discord"]["token"]
+youtube_key = settings["youtube"]["token"]
+tmdb_key = settings["tmdb"]["token"]
+prefix = settings["bot"]["prefix"]
+max_time = settings["bot"]["timeout"]
+my_name = settings["bot"]["my_name"]
 last_msg = None
-squad = []
-mode = ""
+started = False
 
-
-def write_log( log ):
-    logfile = open( data["bot"]["logfile"], "a" )
-    time_format = "%m/%d/%Y %H:%M:%S"
-    now = date.today()
-    time = now.strftime( time_format )
-    logfile.seek( 0, 2 ) #EOF
-    logfile.write( time+" :: "+log+"\n" )
-    logfile.close()
-    return
-
-def search_helper():
-    """reset search"""
-    global searched
-    global results 
-    global timer
-    global search_time
-    global mode
-    global search_msg
-    search_time = None
-    mode = ""
-    searched = False
-    results = {}
-    timer = None
-    search_msg = None
-    return
-
-def timeout():
-    now = datetime.datetime.now()
-    if( searched == False ):
-        return False
-    if( now > ( search_time + timedelta( seconds=max_time ) ) ):
-        return True
-    else:
-        return False
-
-class result:
-    """simple container for search results"""
-    name = ""
-    id = -1
-
-    def __init__(self,t,i):
-        self.title = str(t)
-        self.id = str(i)
-
-    def set_title( self, t ):
-        self.title = t
-
-    def set_id( self, i ):
-        self.id = i
-
-class bee_sting_member():
-    """container for discord member's and time"""
-    def __init__(self, whoami):
-        self.me = whoami
-        self.time = datetime.datetime.now()
-
-def youtube_search( term ):
-    """Search using YouTube's API"""
-    global searched
-    global timer
-    global results
-    global search_time
-    global mode
-
-    if( timeout() == True ):
-        return "Timeout!"
-    elif( searched == True ):
-        return "Search in progress still!"
-    else:
-        results = {}
-        timer = None
-        searched = False
-        search_time  = None
-        mode = "youtube"
-
-    youtube = build( "youtube", "v3", developerKey=youtube_token )
-    resp = youtube.search().list(
-        q=term,
-        part="id,snippet",
-        maxResults=50
-    ).execute()
-
-    count = 0
-    res_str = "```css\n"
-    for res in resp.get( "items", [] ):
-        if( res["id"]["kind"] == "youtube#video" ):
-            count+=1
-            res_str += str(count)+". "+res["snippet"]["title"]+"\n"
-            title = res["snippet"]["title"]
-            video_id = res["id"]["videoId"]
-            vid = result( title, video_id )
-            results[count] = vid
-            if( count >= 10 ):
-                break
-        else:
-            continue
-    searched = True
-    search_time = datetime.datetime.now()
-    res_str+="\n```"
-    return res_str
 
 def get_got_time():
     """fetch time to next got episode"""
@@ -158,212 +42,100 @@ def get_got_time():
     print_str+="until the next Game of Thrones airs!\n\n```"
     return print_str
 
-def the_squad():
-    """fetch squadmate status"""
-    global squad
-    ret_str = ""
-    count = 1
-    ret_str = " \n| Where is The Squad |\n"
-    for m in squad:
-        ret_str += "|  <@"+m.me.id+"> --- "+str(m.me.status)+" --- "+m.time.strftime( "%m/%d %I:%M:%S %p")+"   |\n"
-    ret_str += ""
-    return ret_str
-
-def get_squad():
-    """propogate the squad array"""
-    global squad
-    add = False
-    for u in client.get_all_members():
-        add = False
-        for r in u.roles:
-            if r.name == "the_squad":
-                add = True
-                for s in squad:
-                    if s.me.name == u.name:
-                        add = False
-        if add == True:                    
-            m = bee_sting_member( u )
-            squad.append( m )
-
-def tmdb_search( term ):
-    global searched
-    global timer
-    global results
-    global search_time
-    global mode
-
-    if( timeout() == True ):
-        return "Timeout!"
-    elif( searched == True ):
-        return "Search in progress still!"
-    else:
-        results = {}
-        timer = None
-        searched = False
-        search_time  = None
-        mode = "tmdb"
-    
-        uri = "https://api.themoviedb.org/3/search/movie?api_key="+tmdb_token+"&query="+term
-        searched = True
-        search_time = datetime.datetime.now()
-        http = urllib3.PoolManager()
-        response = http.request( 'GET', uri )
-        data = json.loads( response.data.decode( 'utf-8' ) )
-        count = 0
-        res_str = "```css\n"
-        for res in data.get( "results", [] ):
-            title = res["title"]
-            video_id = res["id"]
-            rating = res["vote_average"]
-            rating_count = res["vote_count"]
-            year = res["release_date"][0:4]
-            if( count >= 10 ):
-                break
-            count+=1
-            res_str += str(count)+". "+title+" ("+str(year)+") -- "+str(rating)+"/10 ("+str(rating_count)+")\n"
-            vid = result( title, video_id )
-            results[count] = vid
-        res_str += "```"
-        return res_str
-
-def ffxivdb_search( term ):
-    global searched
-    global timer
-    global results
-    global search_time
-    global mdoe
-
-    if( timeout() == True ):
-        return "Timeout!"
-    elif( searched == True ):
-        return "Search still in progress!"
-    else:
-        results = {}
-        timer = None
-        searched = False
-        search_time = None
-        mode = "ff"
-
-        uri = "https://api.xivdb.com/search?string="+term
-        searched = True
-        search_time = datetime.datetime.now()
-        http = urllib3.PoolManager()
-        response = http.request( 'GET', uri )
-        data = json.loads( response.data.decode( 'utf-8' ) )
-        count = 0
-        res_str = ""
-        if( data.get( "characters", [] )["results"]["total"] == 1 ):
-            res_str += "Only one result returned!\n"
-            res_str += "https://api.xivdb.com/characters/"+str( data.get( "characters", [] )["results"]["id"] )+"\n"
-            search_helper()
-            return
-        res_str = "```css\n"
-        for res in data.get( "characters", [] ):
-            name = res["results"]["name"]
-            id = res["results"]["id"]
-            server = res["results"]["server"]
-            if( count >= 10 ):
-                break
-            count+=1
-            res_str += str(count)+". "+name+" ("+server+")\n"
-            tmp = result( name+" - ("+server+")", id )
-            results[count] = tmp
-        res_str += "```"
-        return res_str
-
-@client.event
-async def on_member_join():
-    global squad
-    get_squad()
-
-@client.event
-async def on_member_update( before, after ):
-    global squad
-    timeout()
-    for m in squad:
-        if m.me.name == after.name:
-            m.time = datetime.datetime.now()
-            m.me = after
-
+serv_arr = []
 @client.event
 async def on_ready():
-    global squad
-    write_log( "bot started!" )
-    write_log( "user: "+client.user.name )
-    write_log( "id: "+client.user.id )
-    write_log( "----------------------" )
-    get_squad()
+    global started
+    print( "startup" )
+    # build arrays of data
+    # track all servers were on
+    # track all members and their last known status
+    for s in client.servers :
+        new_server = __serv( s, max_time )
+        serv_arr.append( new_server )
+    for s in serv_arr :
+        for u in s.me.members :
+            tmp = __user( u, u.status, datetime.datetime.now() )
+            s.users.append( tmp )
+    print( "startup finished" )
+    started = True
 
+            
+@client.event
+async def on_member_update( before, after ):
+    global started
+    if not started:
+        return
+    
+    for s in serv_arr :
+        for u in s.users :
+            # user match AND status change
+            if u.me.name == after.name and u.status != after.status :
+                u.status = after.status
+                u.time = datetime.datetime.now()
+                return
+            
 @client.event
 async def on_message( msg ):
-    global searched
-    global search_msg
     global last_msg
-
-    if( msg.author.name.find( me ) >= 0 ):
-        return 
-
-        # check for prefix
-    if( searched == True ):
-        # check if sender matches whomever searched
-        if( search_msg.author.name.find( msg.author.name ) != 0 ):
-            return
-        # check timeout
-        if( timeout() == True ):
-            search_helper()
-            return
-        # check int
-        if ( msg.content.isdigit() == False ):
-            return
-        val = int( msg.content )
-        # check range
-        if( val > 10 or val < 0 ):
-            return
-        if( mode == "youtube" ):
-            ret_uri = "Selected video -"+str(val)+"-\nTitle: "+results[val].name+"\nhttps://www.youtube.com/watch?v="+str(results[val].id)
-        elif( mode == "tmdb" ):
-            ret_uri = "Selected video -"+str(val)+"-\nTitle: "+results[val].name+"\nhttps://www.themoviedb.org/movie/"+str(results[val].id)
-        elif( mode == "ff" ):
-            ret_uri = "Selected character - "+str(val)+"-\nName: "+results[val].name+"\nhttps://api.xivdb.com/characters/"+str(results[val].id)
-        last_msg = await client.edit_message( last_msg, ret_uri )
-        search_helper()
-
-    if( msg.content[:len(prefix)].find( prefix ) >= 0 ):
+    global started
+    if not started:
+        return
+    
+    # did i send the message?
+    if msg.author.name.find( my_name ) >= 0 :
+        return
+    
+    # get what server sent message
+    cur_serv = None
+    for s in serv_arr :
+        if s.me == msg.server: 
+            cur_serv = s
+            
+    if cur_serv.search_helper.timeout() == True :
+        cur_serv.search_helper.clear_search()
+        await client.send_message( msg.channel, "Timeout!" )
+        
+    # main processor
+    if (msg.content[:len(prefix)].find( prefix ) >= 0):
         args = msg.content[len(prefix):].split()
-        if( args[0] == "yt" ):
+        if args[0] == "cr" :
+            if (len(args) != 2) :
+                last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
+                return
+            res = []
+            role = None
+            res = s.get_role_status( args[1] )
+            for r in cur_serv.me.roles :
+                if r.name == args[1] :
+                    role = r
+            ret_str = "Current Status of <@&"+role.id+"> :: \n```css\n"
+            for u in res :
+                ret_str += u.me.name+" | Status: "+str(u.status)+" | Last Updated: "+u.time.strftime( "%c" )+"\n"
+            ret_str += "```"
+            last_msg = await client.send_message( msg.channel, ret_str )
+            return
+        elif args[0] == "yt" :
             search_str = ""
-            search_msg = msg
-
-            for i in args[1:]:
-                search_str+=i+" "
-            last_msg = await client.send_message( msg.channel, youtube_search( search_str ) )
+            for arg in args[1:]:
+                search_str += arg+"+"
+            search_str = search_str[:len(search_str)-1]
+            ret_str = cur_serv.search( search_str, "youtube", youtube_key, msg )
+            last_msg = await client.send_message( msg.channel, ret_str )
             return
-        elif( args[0] == "got" ):
-            last_msg = await client.send_message( msg.channel, get_got_time() )
-            return
-        elif( args[0] == "squad" ):
-            last_msg = await client.send_message( msg.channel, the_squad() ) 
-            return
-        elif( args[0] == "movie" ):
-            search_str = ""
-            search_msg = msg
-
-            for i in args[1:]:
-                search_str += i+"+"
-            last_msg = await client.send_message( msg.channel, tmdb_search( search_str ) )
-            return
-        elif( args[0] == "ff" ):
-            search_str = ""
-            search_msg = msg
-
-            for i in args[1:]:
-                search_str += i+"+"
-            last_msg = await client.send_message( msg.channel, ffxivdb_search( search_str ) )
-            return
-        elif( args[0] == "deeznuts" ):
-            last_msg = await client.send_message( msg.channel, "Got 'em!\nhttps://www.youtube.com/watch?v=5LlQNty_C8s" )
+        elif args[0] == "help" or args[0] == "h":
+            await client.send_message( msg.author, "NYI" )
             return
         else:
             return
-
-client.run( discord_token ) 
+        
+    # search results
+    if ( cur_serv.search_helper.searched == True ):
+        if( msg.content.isdigit and msg.author.name == cur_serv.search_helper.search_msg.author.name ):
+            ret_str = cur_serv.search( msg.content, "final", None, None )
+            last_msg = await client.edit_message( last_msg, ret_str )
+            return
+        else:
+            return
+        
+client.run( discord_key )
