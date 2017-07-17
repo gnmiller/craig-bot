@@ -11,6 +11,7 @@ class result:
         self.id = id
 
 class search:
+    """Helper class for searching. Holds global information about the state of the search and it's results."""
     def __init__( self, name, timeout ):
         self.serv_name = name
         self.searched = False
@@ -21,6 +22,7 @@ class search:
         self.max_time = timeout
 
     def timeout( self ):
+        """Determines whether or not a search is in progress and if it has timed out."""
         now = datetime.datetime.now()
         if( self.searched == False ):
             return False
@@ -30,6 +32,7 @@ class search:
             return False
 
     def search_clear( self ):
+        """Reset the search object to a fresh state for the next search."""
         self.searched = False
         self.searc_time = datetime.datetime.now()
         self.search_msg = None
@@ -38,7 +41,7 @@ class search:
         self.search_msg = None
 
     def youtube_search( self, term, apikey, msg ):
-        """Search YouTube for 'term', authenticating with 'apikey' and returning a formatted string of results"""
+        """Authenticate to the YouTube API  using apikey and perform a search with term returning a formatted string result."""v
         if( self.timeout() == True ):
             return "timeout"
         if( self.searched == True ):
@@ -58,6 +61,7 @@ class search:
                     break
             else:
                 continue
+
         self.mode = "youtube"
         self.searched = True
         self.search_time = datetime.datetime.now()
@@ -66,7 +70,7 @@ class search:
         return res_str
 
     def tmdb_search( self, term, apikey, msg ):
-        """Search tmdb for 'term' authenticating with 'apikey' and returning a formatted results string"""
+        """Authenticate to the TMDb API using apikey and perform a search with term returning a formatted string result."""
         if( self.timeout() == True ):
             return "timeout"
         if( self.searched == True ):
