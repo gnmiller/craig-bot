@@ -22,13 +22,12 @@ class craig_server:
         for c in self.cmds :
             self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
         self.auth = []
-        for user in settings[ "user" ] :
-            if settings[ user ] == self.me.name.lower() :
-                self.auth.append( settings["user"][user] )
-        for role in settings[ "role" ] :
-            if settings[ role ] == self.me.name.lower() :
-                self.auth.append( settings["role"][role] )
-        
+        users = settings["user"][self.me.name.lower()]
+        for u in users.split(',') :
+            self.auth.append( u.lower().strip() )
+        roles = settings["role"][self.me.name.lower()]
+        for r in roles.split(',') :
+            self.auth.append( r.lower().strip() )
 
     def get_role_status( self, role_name ):
         """Return all users in the server that are members of role_name"""
