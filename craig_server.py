@@ -2,17 +2,26 @@ import discord
 from craig_helper import search
 from craig_helper import hangman
 import datetime
+from datetime import timedelta
 import pytz
 
 class craig_server:
     """Container for Discord.client.server objects and associated helper objects (eg search())"""
+    cmds = [ "got", "yt", "qr", "tmdb", "status", "stop" ]
     def __init__( self, serv, timeout ):
         self.me = serv
         self.search_helper = search( serv.name, timeout )
         self.users = []
+<<<<<<< HEAD
         self.last_msg = None
         self.busy = False
         self.game = None
+=======
+        self.last_used = {}
+        now = pytz.utc.localize( datetime.datetime.now() )
+        for c in self.cmds :
+            self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
+>>>>>>> 2a3b63d7ba730a9525d2f92ed450af20f35133f3
         
     def get_role_status( self, role_name ):
         """Return all users in the server that are members of role_name"""
