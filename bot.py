@@ -118,12 +118,25 @@ async def on_ready():
         serv_arr.append( new_server )
     for s in serv_arr :
         for u in s.me.members :
-            tmp = __user( u, u.status, datetime.datetime.now() )
+            tmp = __user( u, u.status, pytz.utc.localize( datetime.datetime.now() ) )
             s.users.append( tmp )
     print( "startup finished" )
     started = True
 
-            
+        
+@client.event
+async def on_server_join( server ):
+    print( "new server!" )
+    for s in serv_arr:
+        if s.me.name.lower() == server.name.lower():
+            return
+    new_server = __serv( server, max_time )
+    for u in s.me.members :
+        tmp = __user( u, u.status, pytz.utc.localize( datetime.datetime.now() ) )
+        new_server.users.append( u )
+    serv_arr.append( new_server )
+    return
+
 @client.event
 async def on_member_update( before, after ):
     global started
