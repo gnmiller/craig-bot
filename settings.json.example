@@ -16,6 +16,10 @@
         "prefix":"!",
         "timeout":"TIMEOUT TIME",
         "logfile":"/path/to/logs"
-        "my_name":"BeeStingBot"
+        "my_name":"BeeStingBot",
+        "hangman":
+        {
+            "max_guess":int
+        }
     }
 }
