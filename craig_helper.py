@@ -2,8 +2,11 @@ import datetime, json, urllib3
 from apiclient.discovery import build
 from datetime import date
 from datetime import timedelta
+from math import floor
+import random
 
 class result:
+    """Search results container."""
     name = ""
     id = ""
     def __init__( self, name, id ):
@@ -41,7 +44,7 @@ class search:
         self.search_msg = None
 
     def youtube_search( self, term, apikey, msg ):
-        """Authenticate to the YouTube API  using apikey and perform a search with term returning a formatted string result."""v
+        """Authenticate to the YouTube API  using apikey and perform a search with term returning a formatted string result."""
         if( self.timeout() == True ):
             return "timeout"
         if( self.searched == True ):
@@ -118,3 +121,27 @@ class search:
             return "what"
         self.search_clear()
         return ret_str
+    
+class hangman:
+    """Hangman game. max_guesses can be modified for longer or shorter games. NOTE: Requires /usr/share/dict/words (provided by package words)"""
+    def __init__( self ):
+        self.word = None
+        self.type = "hangman"
+        self.guess_count = 0
+        self.word_list = None
+        self.max_guesses = 5
+        # use a dict to track guesses
+        self.guesses = {}
+        for i in range( 25 ):
+            self.guesses[ chr( i+97 ) ] = False
+        words = []
+        with open( "/usr/share/dict/words" ) as f:
+            words = f.read().split("\n")
+        # find a sort of long word
+        rand = random.randint( 0, len( words ) )
+        t_word = words[ rand ]
+        while len( t_word ) < 6 :
+            print( str(rand) )
+            rand = random.randint( 0, len( words ) )
+            t_word = words[ rand ]
+        self.word = t_word.lower()

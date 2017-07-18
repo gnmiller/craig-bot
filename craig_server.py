@@ -1,5 +1,6 @@
 import discord
-from craig_search import search
+from craig_helper import search
+from craig_helper import hangman
 import datetime
 import pytz
 
@@ -9,6 +10,9 @@ class craig_server:
         self.me = serv
         self.search_helper = search( serv.name, timeout )
         self.users = []
+        self.last_msg = None
+        self.busy = False
+        self.game = None
         
     def get_role_status( self, role_name ):
         """Return all users in the server that are members of role_name"""
@@ -19,15 +23,26 @@ class craig_server:
                     ret_users.append( u )
         return ret_users
     
+    def games( self, mode ):
+        if( mode == "hangman" ):
+            self.game = hangman()
+            self.busy = True
+            
+    
     def search( self, term, mode, apikey, msg ):
         """Perform a search of term in the specified API, using the provided API key where appropriate. Must be called twice, once with the original mode then again with 'final'. Failure to follow this procedure will usually cause a timeout or other undefined behavior."""
-        if mode == "youtube":
-            return self.search_helper.youtube_search( term, apikey, msg )
-        if mode == "tmdb":
-            return self.search_helper.tmdb_search( term, apikey, msg )
-        if mode == "final":
-            return self.search_helper.finalize_search( term )
-        return ""
+        if not busy:
+            # searching is NOT busy because search manages itself own state
+            # TODO perhaps move the search busy state to the server busy state
+            if mode == "youtube":
+                return self.search_helper.youtube_search( term, apikey, msg )
+            if mode == "tmdb":
+                return self.search_helper.tmdb_search( term, apikey, msg )
+            if mode == "final":
+                return self.search_helper.finalize_search( term )
+            return ""
+        else:
+            return "Server is busy, try again in a bit!"
 
 class craig_user:
     """Container for Discord.user. Primarily for tracking the first time they were seen with their current status."""
@@ -35,3 +50,5 @@ class craig_user:
         self.me = user
         self.status = status
         self.time = datetime.datetime.now()
+        
+        

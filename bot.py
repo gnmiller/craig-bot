@@ -96,7 +96,6 @@ async def on_member_update( before, after ):
             
 @client.event
 async def on_message( msg ):
-    global last_msg
     global started
     
     if not started:
@@ -119,17 +118,17 @@ async def on_message( msg ):
     not_auth = "You are not authorized to send this command."
     
     # main processor
-    if (msg.content[:len(prefix)].find( prefix ) >= 0):
+    if ( msg.content[:len(prefix)].find( prefix ) >= 0 ) and not cur_serv.busy :
         args = msg.content[len(prefix):].split()
         if args[0] == "cr" :
             if (len(args) != 2) :
-                last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
+                cur_serv.last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
                 return
             res = []
             role = None
             res = s.get_role_status( args[1] )
             if res == []:
-                last_msg = await client.send_message( msg.channel, "No users with that role." )
+                cur_serv.last_msg = await client.send_message( msg.channel, "No users with that role." )
                 return
             for r in cur_serv.me.roles :
                 if r.name == args[1] :
@@ -140,14 +139,14 @@ async def on_message( msg ):
                 if r.name == role.name :
                     allow = True
             if not allow :
-                last_msg = await client.send_message( msg.channel, "```You are disallowed from this command because you are not a member of <"+role.name+">\n```" )
+                cur_serv.last_msg = await client.send_message( msg.channel, "```You are disallowed from this command because you are not a member of <"+role.name+">\n```" )
                 return
             ret_str = "Current Status of <@&"+role.id+"> :: \n```smalltalk\n"
             for u in res :
                 ret_str += u.me.name+" | Status: "+str(u.status)+" | Last Updated: "
                 ret_str += u.time.strftime( date_format )+"\n"
             ret_str += "```"
-            last_msg = await client.send_message( msg.channel, ret_str )
+            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "yt" :
             search_str = ""
@@ -155,7 +154,7 @@ async def on_message( msg ):
                 search_str += arg+"+"
             search_str = search_str[:len(search_str)-1]
             ret_str = cur_serv.search( search_str, "youtube", youtube_key, msg )
-            last_msg = await client.send_message( msg.channel, ret_str )
+            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "tmdb" :
             search_str = ""
@@ -163,10 +162,26 @@ async def on_message( msg ):
                 search_str += arg+"+"
             search_str = search_str[:len(search_str)-1]
             ret_str = cur_serv.search( search_str, "tmdb", tmdb_key, msg )
-            last_msg = await client.send_message( msg.channel, ret_str )
+            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "got" :
-            last_msg = await client.send_message( msg.channel, get_got_time() )
+            cur_serv.last_msg = await client.send_message( msg.channel, get_got_time() )
+            return
+        elif args[0] == "hangman" :
+            if cur_serv.search_helper.searched :
+                await client.send_message( msg.channel, "Server is searching, try again in a bit." )
+                return
+            if cur_serv.busy == True :
+                await client.send_message( msg.channel, "Server is playing another game!" )
+                return
+            cur_serv.last_msg = await client.send_message( msg.channel, "```Starting up a game of hangman!\nPicking a word and getting ready...\n```")
+            cur_serv.games( "hangman" )
+            cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, cur_serv.last_msg.content+"```All set, send your guesses!```" )
+            ret_str = "```Wrong Guesses Left: "+str(cur_serv.game.max_guesses)+"\n"
+            for i in range( len( cur_serv.game.word ) ):
+                ret_str += "_ "
+            ret_str += '```\n'
+            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "help" or args[0] == "h" :
             ret_str = "```css\nBeeStingBot help menu\nBot prefix: "+prefix+"\nCommands\n------------```\n```css\n"
@@ -178,11 +193,11 @@ async def on_message( msg ):
             return
         elif args[0] == "restart" :
             if msg.author.name == "btcraig" :
-                last_msg = await client.send_message( msg.channel, "Restarting bot." )
+                cur_serv.last_msg = await client.send_message( msg.channel, "Restarting bot." )
                 call( ["service", "craig-bot", "restart"] )
                 return
             else:
-                last_msg = await client.send_message( msg.channel, not_auth )
+                cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
                 return
         elif args[0] == "stop" :
             if msg.author.name == "btcraig" :
@@ -199,19 +214,62 @@ async def on_message( msg ):
                 creat_str = "```smalltalk\nBot running with PID "+str(my_pid)+" since "
                 creat_str += datetime.datetime.fromtimestamp( int(created) ).strftime( date_format )
                 creat_str += "```\n"
-                last_msg = await client.send_message( msg.channel, creat_str )
+                cur_serv.last_msg = await client.send_message( msg.channel, creat_str )
                 return
             else:
-                last_msg = await client.send_message( msg.channel, not_auth )
+                cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
                 return
         else:
             return
-        
+       
+    # play games
+    if cur_serv.busy :
+        if cur_serv.game.type == "hangman" :
+            if len(msg.content) != 1 : # invalid guess
+                return
+            for i in range( 25 ):
+                if msg.content.lower() == chr( i+97 ):
+                    if cur_serv.game.guesses[ msg.content ] == False:
+                        cur_serv.game.guesses[ msg.content ] = True
+                    else:
+                        await client.send_message( msg.channel, msg.content+" has already been guessed!\n" )
+                        await client.delete_message( msg )
+                        return
+            in_word = False
+            for letter in cur_serv.game.word :
+                if msg.content == letter:
+                    in_word = True
+                    break
+            if not in_word:
+                cur_serv.game.guess_count += 1
+            if cur_serv.game.guess_count >= cur_serv.game.max_guesses:
+                ret_str = "```Game over!\nThe word was: "+cur_serv.game.word+"```"
+                cur_serv.game = None
+                cur_serv.busy = False
+                cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
+                return
+            ret_str = "```Guesses Left: "+str( cur_serv.game.max_guesses - cur_serv.game.guess_count )+"\n"
+            for letter in cur_serv.game.word :
+                if cur_serv.game.guesses[ letter ] == True:
+                    ret_str += letter+" "
+                else:
+                    ret_str += "_ "
+            ret_str += "\n"
+            if in_word:
+                ret_str += '"'+msg.content+'"'+" is in the word!\n"
+            else:
+                ret_str += '"'+msg.content+'"'+" is not in the word!\n"
+            ret_str += "```"
+            cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
+            await client.delete_message( msg )
+            return
+        return
+            
     # search results
     if ( cur_serv.search_helper.searched == True ):
         if( msg.content.isdigit and msg.author.name == cur_serv.search_helper.search_msg.author.name ):
             ret_str = cur_serv.search( msg.content, "final", None, None )
-            last_msg = await client.edit_message( last_msg, ret_str )
+            cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
             return
         else:
             return
