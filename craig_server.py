@@ -23,9 +23,11 @@ class craig_server:
             self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
         self.auth = []
         for user in settings[ "user" ] :
-            self.auth.append( settings["user"][user] )
+            if settings[ user ] == self.me.name.lower() :
+                self.auth.append( settings["user"][user] )
         for role in settings[ "role" ] :
-            self.auth.append( settings["role"][role] )
+            if settings[ role ] == self.me.name.lower() :
+                self.auth.append( settings["role"][role] )
         
 
     def get_role_status( self, role_name ):
