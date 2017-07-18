@@ -123,7 +123,7 @@ class search:
         return ret_str
     
 class hangman:
-    """Hangman game. max_guesses can be modified for longer or shorter games. NOTE: Requires /usr/share/dict/words (provided by package words)"""
+    """Hangman game. max_guesses can be modified for longer or shorter games. NOTE: Requires /usr/share/dict/words (provided by package words). Also any non-alphanumeric characters are removed before starting."""
     def __init__( self ):
         self.word = None
         self.type = "hangman"
@@ -139,9 +139,13 @@ class hangman:
             words = f.read().split("\n")
         # find a sort of long word
         rand = random.randint( 0, len( words ) )
+        rand = 474311
         t_word = words[ rand ]
         while len( t_word ) < 6 :
             print( str(rand) )
             rand = random.randint( 0, len( words ) )
             t_word = words[ rand ]
         self.word = t_word.lower()
+        import re
+        reg = re.compile('[^a-zA-Z]')
+        self.word = reg.sub( '', self.word )
