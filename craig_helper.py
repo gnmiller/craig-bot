@@ -4,6 +4,11 @@ from datetime import date
 from datetime import timedelta
 from math import floor
 import random
+import os
+
+path = os.path.dirname(os.path.realpath(__file__))
+with open( path+'/settings.json' ) as f:
+    settings = json.load( f )
 
 class result:
     """Search results container."""
@@ -129,7 +134,7 @@ class hangman:
         self.type = "hangman"
         self.guess_count = 0
         self.word_list = None
-        self.max_guesses = 5
+        self.max_guesses = settings["bot"]["hangman"]["max_guess"]
         # use a dict to track guesses
         self.guesses = {}
         for i in range( 25 ):
@@ -139,7 +144,6 @@ class hangman:
             words = f.read().split("\n")
         # find a sort of long word
         rand = random.randint( 0, len( words ) )
-        rand = 474311
         t_word = words[ rand ]
         while len( t_word ) < 6 :
             print( str(rand) )
