@@ -176,7 +176,7 @@ async def on_message( msg ):
             last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "got" :
-            if cur_serv.last_used[ "got" ] < ( now + timedelta( minutes=-5 ) ):
+            if cur_serv.last_used[ "got" ] >= ( now + timedelta( minutes=-5 ) ):
                 await client.send_message( msg.channel, "Slow down!\n" )
                 return
             last_msg = await client.send_message( msg.channel, get_got_time() )
