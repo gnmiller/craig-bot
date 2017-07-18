@@ -27,11 +27,11 @@ def check_auth( user, cur ):
     """Check if a user is authorized for a server."""
     for r in user.roles :
         for a in cur.auth :
-            if r.name.lower() == a
+            if r.name.lower() == a :
                 return True
     for a in cur.auth :
-        if a.lower() == user.name.lower()
-        return True
+        if a.lower() == user.name.lower() :
+            return True
     return False
 
 def get_got_time():

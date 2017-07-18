@@ -1,10 +1,7 @@
-import discord
+import discord, json, datetime, pytz, os
 from craig_helper import search
 from craig_helper import hangman
-import datetime
 from datetime import timedelta
-import pytz
-import os
 
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/authorized.json' ) as f:
@@ -25,10 +22,10 @@ class craig_server:
         for c in self.cmds :
             self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
         self.auth = []
-        for user in settings[ "user" ]
-            self.auth.append( user )
-        for role in settings[ "role" ]
-            self.auth.append( role )
+        for user in settings[ "user" ] :
+            self.auth.append( settings["user"][user] )
+        for role in settings[ "role" ] :
+            self.auth.append( settings["role"][role] )
         
 
     def get_role_status( self, role_name ):

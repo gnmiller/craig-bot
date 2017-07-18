@@ -1,10 +1,8 @@
-import datetime, json, urllib3
+import datetime, json, urllib3, random, os
 from apiclient.discovery import build
 from datetime import date
 from datetime import timedelta
 from math import floor
-import random
-import os
 
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
