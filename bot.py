@@ -118,38 +118,22 @@ async def on_message( msg ):
         await client.send_message( msg.channel, "Timeout!" )
     
     not_auth = "You are not authorized to send this command."
-<<<<<<< HEAD
-    
     # main processor
     if ( msg.content[:len(prefix)].find( prefix ) >= 0 ) and not cur_serv.busy :
         args = msg.content[len(prefix):].split()
-        if args[0] == "cr" :
+        if args[0] == "qr" :
             if (len(args) != 2) :
                 cur_serv.last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
-=======
-    now = pytz.utc.localize( datetime.datetime.now() )
-    # figure out what we're doing and do it
-    if (msg.content[:len(prefix)].find( prefix ) >= 0):
-        args = msg.content[len(prefix):].split()
-        if args[0] == "qr" : # query role
-            # check we got exactly 2 args
-            if len(args) != 2 :
-                last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
->>>>>>> 2a3b63d7ba730a9525d2f92ed450af20f35133f3
                 return
+            now = pytz.utc.localize( datetime.datetime.now() )
             if cur_serv.last_used[ "qr" ] >= ( now + timedelta( minutes=-2 ) ) :
                 await client.send_message( msg.channel, "Slow down!\n" )
                 return
             res = []
             role = None
             res = s.get_role_status( args[1] )
-<<<<<<< HEAD
             if res == []:
                 cur_serv.last_msg = await client.send_message( msg.channel, "No users with that role." )
-=======
-            if res == []: # role size == 0
-                last_msg = await client.send_message( msg.channel, "No users with that role." )
->>>>>>> 2a3b63d7ba730a9525d2f92ed450af20f35133f3
                 return
             # get the role object
             for r in cur_serv.me.roles :
@@ -168,12 +152,8 @@ async def on_message( msg ):
                 ret_str += u.me.name+" | Status: "+str(u.status)+" | Last Updated: "
                 ret_str += u.time.strftime( date_format )+"\n"
             ret_str += "```"
-<<<<<<< HEAD
             cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
-=======
-            last_msg = await client.send_message( msg.channel, ret_str )
             cur_serv.last_used[ "qr" ] = now
->>>>>>> 2a3b63d7ba730a9525d2f92ed450af20f35133f3
             return
         elif args[0] == "yt" :
             # ' ' -> '+'
@@ -194,8 +174,12 @@ async def on_message( msg ):
             cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "got" :
-<<<<<<< HEAD
+            now = pytz.utc.localize( datetime.datetime.now() )
+            if now >= (cur_serv.last_used[ "got" ] + timedelta( minutes=-5 )) :
+                cur_serv.last_msg = await client.send_message( msg.channel, "Slow down!" )
+                return
             cur_serv.last_msg = await client.send_message( msg.channel, get_got_time() )
+            cur_serv.last_used[ "got" ] = now
             return
         elif args[0] == "hangman" :
             if cur_serv.search_helper.searched :
@@ -212,46 +196,32 @@ async def on_message( msg ):
             for i in range( len( cur_serv.game.word ) ):
                 ret_str += "_ "
             ret_str += '```\n'
-            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
-=======
             if cur_serv.last_used[ "got" ] >= ( now + timedelta( minutes=-5 ) ):
                 await client.send_message( msg.channel, "Slow down!\n" )
                 return
             last_msg = await client.send_message( msg.channel, get_got_time() )
             cur_serv.last_used[ "got" ] = now
->>>>>>> 2a3b63d7ba730a9525d2f92ed450af20f35133f3
             return
         elif args[0] == "help" or args[0] == "h" :
             ret_str = "```css\nBeeStingBot help menu\nBot prefix: "+prefix+"\nCommands\n------------```\n```css\n"
             ret_str += prefix+"yt <search query>\n"+"        Search YouTube for a video.```\n```css\n"
             ret_str += prefix+"tmdb <search query>\n"+"        Search TMDb for a movie.```\n```css\n"
             ret_str += prefix+"got\n        Print brief info on the most recent and next Game of Thrones episode.```\n```css\n"
-<<<<<<< HEAD
             ret_str += prefix+"cr <role_name>\n        Print out status on users that belong to role_name\n            Only information since the bot was last restarted is kept.\n"
             ret_str += prefix+"hangman\n    Start a game of hangman.\n        This will suspend other bot actions until the game is over.\n"
             ret_str += prefix+"gamequit\n    Quit the current game. Does nothing if a game is not in progress.\n"
             ret_str += "```"
             await client.send_message( msg.author, ret_str )
-=======
             ret_str += prefix+"qr <role_name>\n        Print out status on users that belong to role_name\n            Only information since the bot was last restarted is kept.```"
-            last_msg = await client.send_message( msg.author, ret_str )
->>>>>>> 2a3b63d7ba730a9525d2f92ed450af20f35133f3
+            cur_serv.last_message = await client.send_message( msg.author, ret_str )
             return
         elif args[0] == "restart" :
             for a in authorized:
                 if msg.author.name == a:
-<<<<<<< HEAD
                     cur_serv.last_msg = await client.send_message( msg.channel, "Restarting bot." )
                     call( ["service", "craig-bot", "restart"] )
                     return
-            
             cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
-=======
-                    last_msg = await client.send_message( msg.channel, "Restarting bot." )
-                    call( ["service", "craig-bot", "restart"] )
-                    return
-            last_msg = await client.send_message( msg.channel, not_auth )
->>>>>>> 2a3b63d7ba730a9525d2f92ed450af20f35133f3
             return
         elif args[0] == "stop" :
             for a in authorized:
@@ -259,12 +229,7 @@ async def on_message( msg ):
                     last_msg = await client.send_message( msg.channel, "Stopping bot." )
                     call( ["service", "craig-bot", "stop"] )
                     return
-<<<<<<< HEAD
-            
             cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
-=======
-            last_msg = await client.send_message( msg.channel, not_auth )
->>>>>>> 2a3b63d7ba730a9525d2f92ed450af20f35133f3
             return
         elif args[0] == "status" :
             for a in authorized:
@@ -274,7 +239,6 @@ async def on_message( msg ):
                     creat_str = "```smalltalk\nBot running with PID "+str(my_pid)+" since "
                     creat_str += datetime.datetime.fromtimestamp( int(created) ).strftime( date_format )
                     creat_str += "```\n"
-<<<<<<< HEAD
                     cur_serv.last_msg = await client.send_message( msg.channel, creat_str )
                     return
             cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
@@ -297,7 +261,6 @@ async def on_message( msg ):
         cur_serv.busy = False
         cur_serv.game = None
         return
-        
     
     # play games
     if cur_serv.busy :
@@ -354,13 +317,8 @@ async def on_message( msg ):
             ret_str += "```"
             cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
             await client.delete_message( msg )
-=======
-                    last_msg = await client.send_message( msg.channel, creat_str )
-                    return
-            last_msg = await client.send_message( msg.channel, not_auth )
             return
         else:
->>>>>>> 2a3b63d7ba730a9525d2f92ed450af20f35133f3
             return
         return
             
