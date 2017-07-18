@@ -1,6 +1,7 @@
 import discord
 from craig_search import search
 import datetime
+from datetime import timedelta
 import pytz
 
 class craig_server:
@@ -13,7 +14,7 @@ class craig_server:
         self.last_used = {}
         now = pytz.utc.localize( datetime.datetime.now() )
         for c in self.cmds :
-            self.last_used[ c ] = now
+            self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
         
     def get_role_status( self, role_name ):
         """Return all users in the server that are members of role_name"""

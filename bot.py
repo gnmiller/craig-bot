@@ -2,6 +2,7 @@ import discord, asyncio, datetime, json, pytz, os, urllib3
 import dateutil.parser
 import dateutil.relativedelta
 from subprocess import call
+from datetime import timedelta
 from craig_server import craig_server as __serv
 from craig_server import craig_user as __user
 
@@ -77,7 +78,6 @@ async def on_ready():
         for u in s.me.members :
             tmp = __user( u, u.status, datetime.datetime.now() )
             s.users.append( tmp )
-
     print( "startup finished" )
     started = True
 
@@ -119,36 +119,28 @@ async def on_message( msg ):
         await client.send_message( msg.channel, "Timeout!" )
     
     not_auth = "You are not authorized to send this command."
-    
     now = pytz.utc.localize( datetime.datetime.now() )
-
     # figure out what we're doing and do it
     if (msg.content[:len(prefix)].find( prefix ) >= 0):
         args = msg.content[len(prefix):].split()
-
         if args[0] == "qr" : # query role
-            
             # check we got exactly 2 args
             if len(args) != 2 :
                 last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
                 return
-
-            if cur_serv.last_used[ "qr" ] <= ( now + timedelta( minutes=-5 ) ) :
+            if cur_serv.last_used[ "qr" ] >= ( now + timedelta( minutes=-2 ) ) :
                 await client.send_message( msg.channel, "Slow down!\n" )
                 return
-
             res = []
             role = None
             res = s.get_role_status( args[1] )
             if res == []: # role size == 0
                 last_msg = await client.send_message( msg.channel, "No users with that role." )
                 return
-
             # get the role object
             for r in cur_serv.me.roles :
                 if r.name == args[1] :
                     role = r
-            
             # only allowed if youre in the group
             allow = False
             for r in msg.author.roles :
@@ -157,13 +149,13 @@ async def on_message( msg ):
             if not allow :
                 last_msg = await client.send_message( msg.channel, "```You are disallowed from this command because you are not a member of <"+role.name+">\n```" )
                 return
-
             ret_str = "Current Status of <@&"+role.id+"> :: \n```smalltalk\n"
             for u in res :
                 ret_str += u.me.name+" | Status: "+str(u.status)+" | Last Updated: "
                 ret_str += u.time.strftime( date_format )+"\n"
             ret_str += "```"
             last_msg = await client.send_message( msg.channel, ret_str )
+            cur_serv.last_used[ "qr" ] = now
             return
         elif args[0] == "yt" :
             # ' ' -> '+'
@@ -171,7 +163,6 @@ async def on_message( msg ):
             for arg in args[1:]:
                 search_str += arg+"+"
             search_str = search_str[:len(search_str)-1]
-
             ret_str = cur_serv.search( search_str, "youtube", youtube_key, msg )
             last_msg = await client.send_message( msg.channel, ret_str )
             return
@@ -181,7 +172,6 @@ async def on_message( msg ):
             for arg in args[1:]:
                 search_str += arg+"+"
             search_str = search_str[:len(search_str)-1]
-
             ret_str = cur_serv.search( search_str, "tmdb", tmdb_key, msg )
             last_msg = await client.send_message( msg.channel, ret_str )
             return
@@ -190,6 +180,7 @@ async def on_message( msg ):
                 await client.send_message( msg.channel, "Slow down!\n" )
                 return
             last_msg = await client.send_message( msg.channel, get_got_time() )
+            cur_serv.last_used[ "got" ] = now
             return
         elif args[0] == "help" or args[0] == "h" :
             ret_str = "```css\nBeeStingBot help menu\nBot prefix: "+prefix+"\nCommands\n------------```\n```css\n"
