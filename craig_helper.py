@@ -139,7 +139,6 @@ class hangman:
             words = f.read().split("\n")
         # find a sort of long word
         rand = random.randint( 0, len( words ) )
-        rand = 474311
         t_word = words[ rand ]
         while len( t_word ) < 6 :
             print( str(rand) )

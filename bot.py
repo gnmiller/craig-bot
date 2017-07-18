@@ -118,6 +118,7 @@ async def on_message( msg ):
         await client.send_message( msg.channel, "Timeout!" )
     
     not_auth = "You are not authorized to send this command."
+    now = pytz.utc.localize( datetime.datetime.now() )
     # main processor
     if ( msg.content[:len(prefix)].find( prefix ) >= 0 ) and not cur_serv.busy :
         args = msg.content[len(prefix):].split()
@@ -125,19 +126,18 @@ async def on_message( msg ):
             if (len(args) != 2) :
                 cur_serv.last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
                 return
-            now = pytz.utc.localize( datetime.datetime.now() )
             if cur_serv.last_used[ "qr" ] >= ( now + timedelta( minutes=-2 ) ) :
-                await client.send_message( msg.channel, "Slow down!\n" )
+                cur_serv.last_msg = await client.send_message( msg.channel, "Slow down!\n" )
                 return
             res = []
             role = None
-            res = s.get_role_status( args[1] )
+            res = cur_serv.get_role_status( args[1] )
             if res == []:
                 cur_serv.last_msg = await client.send_message( msg.channel, "No users with that role." )
                 return
             # get the role object
             for r in cur_serv.me.roles :
-                if r.name == args[1] :
+                if r.name.lower() == args[1].lower() :
                     role = r
             # only allowed if youre in the group
             allow = False
@@ -185,22 +185,15 @@ async def on_message( msg ):
             if cur_serv.search_helper.searched :
                 await client.send_message( msg.channel, "Server is searching, try again in a bit." )
                 return
-            if cur_serv.busy == True :
-                await client.send_message( msg.channel, "Server is playing another game!" )
-                return
             cur_serv.last_msg = await client.send_message( msg.channel, "```Starting up a game of hangman!\nPicking a word and getting ready...\n```")
             cur_serv.games( "hangman" )
             print( cur_serv.game.word )
             cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, cur_serv.last_msg.content+"```All set, send your guesses!```" )
-            ret_str = "```Wrong Guesses Left: "+str(cur_serv.game.max_guesses)+"\n"
+            ret_str = "```Max Guesses: "+str(cur_serv.game.max_guesses)+"\n"
             for i in range( len( cur_serv.game.word ) ):
                 ret_str += "_ "
             ret_str += '```\n'
-            if cur_serv.last_used[ "got" ] >= ( now + timedelta( minutes=-5 ) ):
-                await client.send_message( msg.channel, "Slow down!\n" )
-                return
-            last_msg = await client.send_message( msg.channel, get_got_time() )
-            cur_serv.last_used[ "got" ] = now
+            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "help" or args[0] == "h" :
             ret_str = "```css\nBeeStingBot help menu\nBot prefix: "+prefix+"\nCommands\n------------```\n```css\n"
@@ -257,13 +250,16 @@ async def on_message( msg ):
         if not cur_serv.busy:
             cur_serv.last_msg = await client.send_message( msg.channel, "Doesn't look you're playing any games here right now, m8.\n" )
             return
-        cur_serv.last_msg = await client.send_messahe( msg.channel, "```Terminating game of "+cur_serv.game.type+"```\n")
+        cur_serv.last_msg = await client.send_message( msg.channel, "```Terminating game of "+cur_serv.game.type+"```\n")
         cur_serv.busy = False
         cur_serv.game = None
         return
     
     # play games
     if cur_serv.busy :
+        if msg.content[:len(prefix)] == prefix:
+            await client.send_message( msg.channel, "Server is busy, try again in a bit!\n" )
+            return
         if cur_serv.game.type == "hangman" :
             # valid guess
             if len(msg.content) != 1 : # invalid guess
@@ -330,5 +326,6 @@ async def on_message( msg ):
             return
         else:
             return
-        
+# bottom of on_message()       
+
 client.run( discord_key )

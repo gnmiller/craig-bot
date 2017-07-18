@@ -25,7 +25,7 @@ class craig_server:
         ret_users = []
         for u in self.users :
             for r in u.me.roles :
-                if r.name == role_name.lower() :
+                if r.name.lower() == role_name.lower() :
                     ret_users.append( u )
         return ret_users
     
@@ -37,7 +37,7 @@ class craig_server:
     
     def search( self, term, mode, apikey, msg ):
         """Perform a search of term in the specified API, using the provided API key where appropriate. Must be called twice, once with the original mode then again with 'final'. Failure to follow this procedure will usually cause a timeout or other undefined behavior."""
-        if not busy:
+        if not self.busy:
             # searching is NOT busy because search manages itself own state
             # TODO perhaps move the search busy state to the server busy state
             if mode == "youtube":
