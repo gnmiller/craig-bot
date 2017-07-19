@@ -42,6 +42,38 @@ class craig_server:
                     ret_users.append( u )
         return ret_users
     
+    def add_auth( self, new, mode ):
+        if mode == "role":
+            for r in self.auth["role"]:
+                if r == new:
+                    return False
+            self.auth["role"].append( new.lower().strip() )
+            return True
+        if mode == "user":
+            for u in self.auth["user"]:
+                if u == new:
+                    return False
+            self.auth["user"].append( new.lower().strip() )
+            return True
+        
+    def del_auth( self, delete ):
+        if delete in self.auth["user"]:
+            self.auth["user"].remove( delete )
+        if delete in self.auth["role"]:
+            self.auth["role"].remove( delete )
+        return
+              
+    def check_auth( self, user ):
+        """Check if a user is authorized for a server."""
+        for r in user.roles :
+            for a in self.auth["role"] :
+                if r.name.lower() == a :
+                    return True
+        for u in self.auth["user"] :
+            if u.lower() == user.name.lower() :
+                return True
+        return False
+        
     def games( self, mode ):
         if( mode == "hangman" ):
             self.game = hangman()

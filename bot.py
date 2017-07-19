@@ -19,18 +19,6 @@ my_name = settings["bot"]["my_name"]
 last_msg = None
 started = False
 date_format = "%m/%d/%y %I:%M %p"
-authorized = ["btcraig","klobb"]
-
-def check_auth( user, cur ):
-    """Check if a user is authorized for a server."""
-    for r in user.roles :
-        for a in cur.auth["role"] :
-            if r.name.lower() == a :
-                return True
-    for a in cur.auth["user"] :
-        if a.lower() == user.name.lower() :
-            return True
-    return False
 
 def magic_8ball():
     yes = ["It is decidedly so","Without a doubt","Yes, definitely","You can count on it","As I see it: Yes", "Most likely", "Outlook good", "Yes!", "All signs point to yes"]
@@ -55,7 +43,8 @@ def help_string():
     ret_str += prefix+"hangman\n    Start a game of hangman.\n    This will suspend other bot actions until the game is over.\n"
     ret_str += prefix+"qr <role_name>\n    Print out status on users that belong to role_name\n    Only information since the bot was last restarted is kept.\n\n"
     ret_str += prefix+"8ball <question>\n    Ask the Magic 8-ball a question and see what the fates have in store.\n\n"
-    ret_str += prefix+"auth\n    Returns a list of the users authorized for privileged commands on the server.\n    Privileged commands are denoted with a (+) in the help dialogue\n\n"
+    ret_str += prefix+"auth [user|role] [username|rolename]\n    Returns a list of the users authorized for privileged commands on the server.\n    Privileged commands are denoted with a (+) in the help dialogue\n    If role/user is specified (and a name given) the server will temporarily authorize that user/role.\n\n"
+    ret_str += prefix+"deauth <username|rolename>\n    De-authorize the given role or user. If the user/role is in the authorized config file it will re-load on re-start.\n\n"
     ret_str += prefix+"gamequit (+)\n    Quit the current game. Does nothing if a game is not in progress.\n\n"
     ret_str += prefix+"stop (+)\n    Stops the bot.\n\n"
     ret_str += prefix+"restart (+)\n    Restarts th bot.\n\n"
@@ -83,8 +72,7 @@ async def on_ready():
             s.users.append( tmp )
     print( "startup finished" )
     started = True
-
-            
+          
 @client.event
 async def on_member_update( before, after ):
     global started
@@ -201,21 +189,21 @@ async def on_message( msg ):
             cur_serv.last_message = await client.send_message( msg.author, help_string() )
             return
         elif args[0] == "restart" :
-            if check_auth( msg.author, cur_serv ) == True :
+            if cur_serv.check_auth( msg.author ) == True :
                 cur_serv.last_msg = await client.send_message( msg.channel, "Restarting bot." )
                 call( ["service", "craig-bot", "restart"] )
                 return
             cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
             return
         elif args[0] == "stop" :
-            if check_auth( msg.author, cur_serv ) == True :
+            if cur_serv.check_auth( msg.author ) == True :
                 cur_serv.last_msg = await client.send_message( msg.channel, "Stopping bot." )
                 call( ["service", "craig-bot", "stop"] )
                 return
             cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
             return
         elif args[0] == "status" :
-            if check_auth( msg.author, cur_serv ) == True :
+            if cur_serv.check_auth( msg.author ) == True :
                 my_pid = os.getpid()
                 created = os.path.getmtime( "/proc/"+str(my_pid) )
                 creat_str = "```smalltalk\nBot running with PID "+str(my_pid)+" since "
@@ -225,14 +213,39 @@ async def on_message( msg ):
                 return
             cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
             return
-        elif args[0] == "auth" :
-            ret_str = "```The following users and roles (in no order) are authorized for this server: \n"
-            for a in cur_serv.auth :
-                ret_str += a+"\n"
-            ret_str += "```"
-            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
-            return
-        elif args[0] == "8ball" :
+        elif args[0] == "auth":
+            if len(args) == 1:
+                ret_str = "```The following users and roles are authorized for this server: \nUsers\n----------------\n"
+                if len(cur_serv.auth["user"]) <= 0:
+                    ret_str += "None\n"
+                for a in cur_serv.auth["user"]:
+                    ret_str += a+"\n"
+                ret_str += "----------------\nRoles\n----------------\n"
+                if len(cur_serv.auth["role"]) <= 0:
+                    ret_str += "None\n"
+                for a in cur_serv.auth["role"]:
+                    ret_str += a+"\n"
+                ret_str += "```"
+                cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
+                return
+            elif len(args) == 3:
+                if cur_serv.check_auth( msg.author ):
+                    cur_serv.add_auth( args[2], args[1] )
+                    cur_serv.last_msg = await client.send_message( msg.channel, "Adding new "+args[1]+" to the server's auth list with name: "+args[2]+" (temporarily).\n" )
+                    return
+                cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
+                return
+        elif args[0] == "deauth":
+            if cur_serv.check_auth( msg.author ):
+                if len(args) == 1:
+                    cur_serv.last_msg = await client.send_message( msg.channel, "You need to specify a name!\n" )
+                cur_serv.last_msg = await client.send_message( msg.channel, "Removing "+args[1]+" from the authorized list.\n" )
+                cur_serv.del_auth( args[1] )
+                return
+            else:
+                cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
+                return
+        elif args[0] == "8ball":
             question = "```You asked: \n"
             if len(args) == 1 :
                 cur_serv.last_msg = await client.send_message( msg.channel, "You didn't ask me anything!" )
@@ -249,7 +262,7 @@ async def on_message( msg ):
     
     # cant go in main loop since it checks busy
     if msg.content == "!gamequit" and cur_serv.busy :
-        if check_auth( msg.author, cur_serv ) == True :
+        if cur_serv.check_auth( msg.author ) == True :
             cur_serv.last_msg = await client.send_message( msg.channel, "Terminating game of"+cur_serv.game.type+"```\n" )
             cur_serv.reset_game()
             return
