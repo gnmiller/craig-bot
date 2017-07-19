@@ -103,14 +103,14 @@ async def on_message( msg ):
     # valid cmd
     msg_prefix = msg.content[:len(prefix)]
     args = msg.content[len(prefix):].split()
-    if not cur_serv.busy:
+    if not cur_serv.busy and not cur_serv.search_helper.searched:
         if prefix in msg_prefix:
             if args[0] not in cmds:
                 return
         else:
             return
     # main processor
-    if not cur_serv.busy :
+    if not cur_serv.busy and not cur_serv.search_helper.searched:
         if args[0] == "qr":
             if (len(args) != 2) :
                 cur_serv.last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
