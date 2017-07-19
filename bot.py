@@ -72,6 +72,10 @@ async def on_message( msg ):
     # did i send the message?
     if msg.author.name.find( my_name ) >= 0 :
         return
+    # special help message..
+    if client.user.mentioned_in( msg ):
+        await client.send_message( msg.channel, "Sorry! I don't respond to mentions. Use "+prefix+"help or "+prefix+"h to see what I can do.\n" )
+        return
     # get what server sent message
     cur_serv = None
     for s in serv_arr :
