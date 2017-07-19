@@ -24,12 +24,14 @@ class craig_server:
         self.auth = {}
         self.auth["role"] = []
         self.auth["user"] = []
-        users = settings["user"][self.me.name.lower()]
-        for u in users.split(',') :
-            self.auth["user"].append( u.lower().strip() )
-        roles = settings["role"][self.me.name.lower()]
-        for r in roles.split(',') :
-            self.auth["role"].append( r.lower().strip() )
+        if self.me.name in settings["user"]:
+            users = settings["user"][self.me.name.lower()]
+            for u in users.split(',') :
+                self.auth["user"].append( u.lower().strip() )
+        if self.me.name in settings["role"]:
+            roles = settings["role"][self.me.name.lower()]
+            for r in roles.split(',') :
+                self.auth["role"].append( r.lower().strip() )
 
     def get_role_status( self, role_name ):
         """Return all users in the server that are members of role_name"""
@@ -64,17 +66,17 @@ class craig_server:
         self.busy = False
         self.mode = None
         
-    def play_hangman( self, guess )
+    def play_hangman( self, guess ):
         """Play hangman"""
         if not self.game.type == "hangman":
             return "no"
         
         # validate guess and update array
         for i in range( 25 ):
-            if guess.lower() == chr( i+97 )
+            if guess.lower() == chr( i+97 ):
                 if self.game.guesses[ guess ] == False:
                     self.game.guesses[ guess ] = True
-                else
+                else:
                     return "guessed"
         
         # is guess in word
@@ -96,7 +98,7 @@ class craig_server:
         for letter in self.game.word:
             if self.game.guesses[ letter ] == True:
                 temp_str += letter
-        if temp_str == self.game.word;
+        if temp_str == self.game.word:
             self.reset_game()
             return "won"
         

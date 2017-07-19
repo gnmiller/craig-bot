@@ -335,7 +335,7 @@ async def on_message( msg ):
                 cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
                 await client.delete_message( msg )
                 return
-            if status == "out"
+            if status == "out":
                 ret_str = "```"+board+"\n"+guess+" is not in the word.\n"
                 cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
                 await client.delete_message( msg )
