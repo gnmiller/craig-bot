@@ -239,7 +239,7 @@ async def on_message( msg ):
     # cant go in main loop since it checks busy
     if msg.content == "!gamequit" and cur_serv.busy :
         if cur_serv.check_auth( msg.author ) == True :
-            cur_serv.last_msg = await client.send_message( msg.channel, "```Terminating game of"+cur_serv.game.type+"```\n" )
+            cur_serv.last_msg = await client.send_message( msg.channel, "```Terminating game of "+cur_serv.game.type+"```\n" )
             cur_serv.reset_game()
             return
         if not cur_serv.busy:
