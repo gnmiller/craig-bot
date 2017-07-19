@@ -26,10 +26,10 @@ authorized = ["btcraig","klobb"]
 def check_auth( user, cur ):
     """Check if a user is authorized for a server."""
     for r in user.roles :
-        for a in cur.auth :
+        for a in cur.auth["role"] :
             if r.name.lower() == a :
                 return True
-    for a in cur.auth :
+    for a in cur.auth["user"] :
         if a.lower() == user.name.lower() :
             return True
     return False
@@ -305,61 +305,41 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "Server is busy, try again in a bit!\n" )
             return
         if cur_serv.game.type == "hangman" :
+            guess = msg.content
             # valid guess
-            if len(msg.content) != 1 : # invalid guess
+            if len( guess ) != 1 : # invalid guess
                 return
-            # check if guess is char and update guess table
-            for i in range( 25 ):
-                if msg.content.lower() == chr( i+97 ):
-                    if cur_serv.game.guesses[ msg.content ] == False:
-                        cur_serv.game.guesses[ msg.content ] = True
-                    else:
-                        await client.send_message( msg.channel, msg.content+" has already been guessed!\n" )
-                        await client.delete_message( msg )
-                        return
-            # guess in word
-            in_word = False
-            for letter in cur_serv.game.word :
-                if msg.content == letter:
-                    in_word = True
-                    break
-            if not in_word:
-                cur_serv.game.guess_count += 1
-            # loss
-            if cur_serv.game.guess_count >= cur_serv.game.max_guesses:
-                ret_str = "```Game over!\nThe word was: "+cur_serv.game.word+"```"
-                cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
-                cur_serv.game = None
-                cur_serv.busy = False
+            status = cur_serv.play_hangman( guess )
+            if status == "no":
+                await client.send_message( msg.channel, "Doesn't look like we're playing hangman!\n" )
                 return
-            ret_str = "```Guesses Left: "+str( cur_serv.game.max_guesses - cur_serv.game.guess_count )+"\n"
-            # build the current 'word'
-            t_str = ""
-            for letter in cur_serv.game.word :
-                if cur_serv.game.guesses[ letter ] == True:
-                    ret_str += letter+" "
-                    t_str += letter
-                else:
-                    ret_str += "_ "
-            # chicken dinner
-            if t_str == cur_serv.game.word :
-                ret_str = "```Game over, you guessed the word!\nAnswer: "+cur_serv.game.word+"```"
+            if status == "guessed":
+                await client.send_message( msg.channel, msg.content+" has already been guessed!\n" )
+                await client.delete_message( msg )
+                return
+            if status == "loss":
+                ret_str = "```Game over!\nThe word was: "+cur_serv.game.word+"```\n"
+                await client.delete_message( msg )
+                cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
+                return
+            if status == "won":
+                ret_str = "```Congratulations! You guessed the word: "+cur_serv.gane.word+"```\n"
                 await client.delete_message( msg )
                 cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
-                cur_serv.game = None
-                cur_serv.busy = False
                 return
-            ret_str += "\n"
-            if in_word:
-                ret_str += '"'+msg.content+'"'+" is in the word!\n"
-            else:
-                ret_str += '"'+msg.content+'"'+" is not in the word!\n"
-            ret_str += "```"
-            cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
-            await client.delete_message( msg )
-            return
-        else:
-            return
+            
+            # at this point the game is still going...
+            board = cur_serv.hangman_word()
+            if status == "in":
+                ret_str = "```"+board+"\n"+guess+" is in the word!\n"
+                cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
+                await client.delete_message( msg )
+                return
+            if status == "out"
+                ret_str = "```"+board+"\n"+guess+" is not in the word.\n"
+                cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
+                await client.delete_message( msg )
+                return
         return
             
     # search results
