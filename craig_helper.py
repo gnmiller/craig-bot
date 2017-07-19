@@ -1,7 +1,7 @@
-import datetime, json, urllib3, random, os
+import datetime, json, urllib3, random, os, pytz
 from apiclient.discovery import build
-from datetime import date
-from datetime import timedelta
+from datetime import date, timedelta
+from dateutil import parser, relativedelta
 from math import floor
 
 path = os.path.dirname(os.path.realpath(__file__))
@@ -150,3 +150,42 @@ class hangman:
         import re
         reg = re.compile('[^a-zA-Z]')
         self.word = reg.sub( '', self.word )
+        
+def get_got_time():
+    """Returns a formatted string with the time until the next and time from the previous GoT episode. Episode name is also returned in the string."""
+    cur = datetime.datetime.now()
+    uri = "http://api.tvmaze.com/shows/82?embed[]=nextepisode&embed[]=previousepisode"
+    http = urllib3.PoolManager()
+    response = http.request( 'GET', uri )
+    data = json.loads( response.data.decode( 'utf-8' ) )
+    next_ep = parser.parse( data["_embedded"]["nextepisode"]["airstamp"] )
+    next_ep_name = data["_embedded"]["nextepisode"]["name"]
+    prev_ep = parser.parse( data["_embedded"]["previousepisode"]["airstamp"] )
+    prev_ep_name = data["_embedded"]["previousepisode"]["name"]
+    cur = pytz.utc.localize( cur )
+    next_diff = relativedelta.relativedelta( next_ep, cur )
+    prev_diff = relativedelta.relativedelta( prev_ep, cur )
+    print_str = "```smalltalk\nLast Episode: "+prev_ep_name+" aired "
+    if (abs(prev_diff.months) > 0):
+        print_str+=str(abs(prev_diff.months))+" months "
+    if (abs(prev_diff.days) > 0):
+        print_str+=str(abs(prev_diff.days))+" days "
+    if (abs(prev_diff.hours) > 0):
+        print_str+=str(abs(prev_diff.hours))+" hours "
+    if (abs(prev_diff.minutes) > 0):
+        print_str+=str(abs(prev_diff.minutes))+" minutes and "
+    if (abs(prev_diff.seconds) > 0):
+        print_str+=str(abs(prev_diff.seconds))+" seconds ago\n"
+    print_str+="Next Episode: "+next_ep_name+" airs in "
+    if next_diff.months > 0 :
+        print_str+=str(next_diff.months)+" months "
+    if next_diff.days > 0 :
+        print_str+=str(next_diff.days)+" days "
+    if next_diff.hours > 0 :
+        print_str+=str(next_diff.hours)+" hours "
+    if next_diff.minutes > 0 :
+        print_str+=str(next_diff.minutes)+" minutes and "
+    if next_diff.seconds > 0 :
+        print_str+=str(next_diff.seconds)+" seconds\n"
+    print_str += "```"
+    return print_str
