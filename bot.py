@@ -37,7 +37,18 @@ async def on_ready():
             s.users.append( tmp )
     print( "startup finished" )
     started = True
-          
+
+@client.event
+async def on_server_join( server ):
+    for s in serv_arr:
+        if s.me.name == server.name:
+            return
+    new_serv = __serv( server, max_time )
+    for u in s.me.members:
+        tmp = __user( u, u.state, datetime.datetime.now() )
+        s.users.append( tmp )
+    serv_arr.append( new_serv )
+    
 @client.event
 async def on_member_update( before, after ):
     global started
@@ -203,8 +214,10 @@ async def on_message( msg ):
             if cur_serv.check_auth( msg.author ):
                 if len(args) == 1:
                     cur_serv.last_msg = await client.send_message( msg.channel, "You need to specify a name!\n" )
-                cur_serv.last_msg = await client.send_message( msg.channel, "Removing "+args[1]+" from the authorized list.\n" )
-                cur_serv.del_auth( args[1] )
+                if cur_serv.del_auth( args[1] ) == True:
+                    cur_serv.last_msg = await client.send_message( msg.channel, "Removing "+args[1]+" from the authorized list.\n" )
+                    return
+                cur_serv.last_msg = await client.send_message( msg.channel, "It doesn't look like "+args[1]+" was in the authorized list.\n" )
                 return
             else:
                 cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
@@ -226,7 +239,7 @@ async def on_message( msg ):
     # cant go in main loop since it checks busy
     if msg.content == "!gamequit" and cur_serv.busy :
         if cur_serv.check_auth( msg.author ) == True :
-            cur_serv.last_msg = await client.send_message( msg.channel, "Terminating game of"+cur_serv.game.type+"```\n" )
+            cur_serv.last_msg = await client.send_message( msg.channel, "```Terminating game of"+cur_serv.game.type+"```\n" )
             cur_serv.reset_game()
             return
         if not cur_serv.busy:

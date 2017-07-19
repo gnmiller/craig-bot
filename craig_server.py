@@ -61,9 +61,11 @@ class craig_server:
         """De-authorized a role or user (temp)"""
         if delete in self.auth["user"]:
             self.auth["user"].remove( delete )
+            return True
         if delete in self.auth["role"]:
             self.auth["role"].remove( delete )
-        return
+            return True
+        return False
               
     def check_auth( self, user ):
         """Check if a user is authorized for a server."""

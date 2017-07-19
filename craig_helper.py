@@ -215,7 +215,7 @@ def help_string( prefix ):
     ret_str += prefix+"hangman\n    Start a game of hangman.\n    This will suspend other bot actions until the game is over.\n\n"
     ret_str += prefix+"qr <role_name>\n    Print out status on users that belong to role_name\n    Only information since the bot was last restarted is kept.\n\n"
     ret_str += prefix+"8ball <question>\n    Ask the Magic 8-ball a question and see what the fates have in store.\n\n"
-    ret_str += prefix+"auth [user|role] [username|rolename]\n    Returns a list of the users authorized for privileged commands on the server.\n    Privileged commands are denoted with a (+) in the help dialogue\n    If role/user is specified (and a name given) the server will temporarily authorize that user/role.\n\n"
+    ret_str += prefix+"auth [user|role] [username|rolename]\n    Returns a list of the users authorized for privileged commands on the server.\n    Privileged commands are denoted with a (+) in the help dialogue\n    If role/user is specified (and a name given) the server will temporarily authorize that user/role.\n    Does not check if role or user actually exists\n\n"
     ret_str += prefix+"deauth <username|rolename>\n    De-authorize the given role or user. If the user/role is in the authorized config file it will re-load on re-start.\n\n"
     ret_str += prefix+"gamequit (+)\n    Quit the current game. Does nothing if a game is not in progress.\n\n"
     ret_str += prefix+"stop (+)\n    Stops the bot.\n\n"
