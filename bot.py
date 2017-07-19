@@ -35,6 +35,7 @@ async def on_ready():
         for u in s.me.members :
             tmp = __user( u, u.status, datetime.datetime.now() )
             s.users.append( tmp )
+    await client.change_presence( game=discord.Game( name='Deez Nuts in ' + str(len( client.servers ))+" servers" ) )
     print( "startup finished" )
     started = True
 
@@ -48,6 +49,7 @@ async def on_server_join( server ):
         tmp = __user( u, u.state, datetime.datetime.now() )
         s.users.append( tmp )
     serv_arr.append( new_serv )
+    await client.change_presence( game=discord.Game( name='Deez Nuts in ' + str(len( client.servers ))+" servers" ) )
     
 @client.event
 async def on_member_update( before, after ):
