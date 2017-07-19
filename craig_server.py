@@ -19,7 +19,6 @@ class craig_server:
         now = pytz.utc.localize( datetime.datetime.now() )
         for c in cmds :
             self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
-<<<<<<< HEAD
         self.auth = []
         if self.me.name.lower() in settings["user"]:
             users = settings["user"][self.me.name.lower()]
@@ -29,7 +28,6 @@ class craig_server:
             roles = settings["role"][self.me.name.lower()]
             for r in roles.split(',') :
                 self.auth.append( r.lower().strip() )
-=======
         self.auth = {}
         self.auth["role"] = []
         self.auth["user"] = []
@@ -41,7 +39,6 @@ class craig_server:
             roles = settings["role"][self.me.name.lower()]
             for r in roles.split(',') :
                 self.auth["role"].append( r.lower().strip() )
->>>>>>> development
 
     def get_role_status( self, role_name ):
         """Return all users in the server that are members of role_name"""
