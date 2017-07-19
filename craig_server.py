@@ -43,6 +43,7 @@ class craig_server:
         return ret_users
     
     def add_auth( self, new, mode ):
+        """Authorize a user or role (temp)"""
         if mode == "role":
             for r in self.auth["role"]:
                 if r == new:
@@ -57,6 +58,7 @@ class craig_server:
             return True
         
     def del_auth( self, delete ):
+        """De-authorized a role or user (temp)"""
         if delete in self.auth["user"]:
             self.auth["user"].remove( delete )
         if delete in self.auth["role"]:
@@ -75,6 +77,7 @@ class craig_server:
         return False
         
     def games( self, mode ):
+        """Construct games"""
         if( mode == "hangman" ):
             self.game = hangman()
             self.busy = True            
@@ -93,7 +96,9 @@ class craig_server:
             return ""
         else:
             return "Server is busy, try again in a bit!"
+        
     def reset_game( self ):
+        """Reset the server to a state with no game playing"""
         self.game = None
         self.busy = False
         self.mode = None
@@ -152,7 +157,6 @@ class craig_server:
             ret_str += "\n"
         return ret_str
         
-
 class craig_user:
     """Container for Discord.user. Primarily for tracking the first time they were seen with their current status."""
     def __init__( self, user, status, time ):

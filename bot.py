@@ -2,7 +2,7 @@ import discord, asyncio, datetime, json, pytz, os, urllib3, random
 from subprocess import call
 from datetime import timedelta
 from craig_server import craig_server as __serv, craig_user as __user
-from craig_helper import get_got_time
+from craig_helper import get_got_time, magic_8ball, help_string
 
 # load settings file
 path = os.path.dirname(os.path.realpath(__file__))
@@ -20,42 +20,7 @@ last_msg = None
 started = False
 date_format = "%m/%d/%y %I:%M %p"
 
-def magic_8ball():
-    yes = ["It is decidedly so","Without a doubt","Yes, definitely","You can count on it","As I see it: Yes", "Most likely", "Outlook good", "Yes!", "All signs point to yes"]
-    maybe = ["Reply hazy, try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again"]
-    no = ["Don't count on it", "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
-    r = random.randint( 0, 2 )
-    if r == 0 :
-        return yes[ random.randint( 0, len( yes ) ) ]
-    if r == 1 :
-        return maybe[ random.randint( 0, len( maybe ) ) ]
-    if r == 2 :
-        return no[ random.randint( 0, len( no ) ) ]
-    return "what"
-
-def help_string():
-    ret_str = "```css\nBeeStingBot help menu\nBot prefix: "+prefix+"\nCommands\n------------```\n"
-    ret_str += "```css\n"
-    ret_str += prefix+"yt <search query>\n"+"    Search YouTube for a video.\n\n"
-    ret_str += prefix+"tmdb <search query>\n"+"    Search TMDb for a movie.\n\n"
-    ret_str += prefix+"got\n    Print brief info on the most recent and next Game of Thrones episode.\n\n"
-    ret_str += prefix+"cr <role_name>\n    Print out status on users that belong to role_name\n            Only information since the bot was last restarted is kept.\n\n"
-    ret_str += prefix+"hangman\n    Start a game of hangman.\n    This will suspend other bot actions until the game is over.\n"
-    ret_str += prefix+"qr <role_name>\n    Print out status on users that belong to role_name\n    Only information since the bot was last restarted is kept.\n\n"
-    ret_str += prefix+"8ball <question>\n    Ask the Magic 8-ball a question and see what the fates have in store.\n\n"
-    ret_str += prefix+"auth [user|role] [username|rolename]\n    Returns a list of the users authorized for privileged commands on the server.\n    Privileged commands are denoted with a (+) in the help dialogue\n    If role/user is specified (and a name given) the server will temporarily authorize that user/role.\n\n"
-    ret_str += prefix+"deauth <username|rolename>\n    De-authorize the given role or user. If the user/role is in the authorized config file it will re-load on re-start.\n\n"
-    ret_str += prefix+"gamequit (+)\n    Quit the current game. Does nothing if a game is not in progress.\n\n"
-    ret_str += prefix+"stop (+)\n    Stops the bot.\n\n"
-    ret_str += prefix+"restart (+)\n    Restarts th bot.\n\n"
-    ret_str += prefix+"status (+)\n    Displays status of the bot (PID and start time).\n\n"
-    ret_str += "```"
-    return ret_str
-
-
-
 serv_arr = []
-authorized = ["btcraig"]
 @client.event
 async def on_ready():
     global started
@@ -78,7 +43,6 @@ async def on_member_update( before, after ):
     global started
     if not started:
         return
-    
     for s in serv_arr :
         for u in s.users :
             # user match AND status change
@@ -90,24 +54,20 @@ async def on_member_update( before, after ):
 @client.event
 async def on_message( msg ):
     global started
-    
     if not started:
         return
-    
     # did i send the message?
     if msg.author.name.find( my_name ) >= 0 :
         return
-    
     # get what server sent message
     cur_serv = None
     for s in serv_arr :
         if s.me == msg.server: 
             cur_serv = s
-            
     if cur_serv.search_helper.timeout() == True :
         cur_serv.search_helper.clear_search()
         await client.send_message( msg.channel, "Timeout!" )
-    
+        
     not_auth = "You are not authorized to send this command."
     now = pytz.utc.localize( datetime.datetime.now() )
     # main processor
@@ -186,7 +146,7 @@ async def on_message( msg ):
             cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "help" or args[0] == "h" :
-            cur_serv.last_message = await client.send_message( msg.author, help_string() )
+            cur_serv.last_message = await client.send_message( msg.author, help_string( prefix ) )
             return
         elif args[0] == "restart" :
             if cur_serv.check_auth( msg.author ) == True :
@@ -233,7 +193,11 @@ async def on_message( msg ):
                     cur_serv.add_auth( args[2], args[1] )
                     cur_serv.last_msg = await client.send_message( msg.channel, "Adding new "+args[1]+" to the server's auth list with name: "+args[2]+" (temporarily).\n" )
                     return
-                cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
+                else:
+                    cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
+                    return
+            else:
+                cur_sev.last_msg = await client.send_message( msg.channel, "Bad format! Check the help dialogue.\n" )
                 return
         elif args[0] == "deauth":
             if cur_serv.check_auth( msg.author ):
@@ -259,7 +223,6 @@ async def on_message( msg ):
             return
         else:
             return
-    
     # cant go in main loop since it checks busy
     if msg.content == "!gamequit" and cur_serv.busy :
         if cur_serv.check_auth( msg.author ) == True :
@@ -271,7 +234,6 @@ async def on_message( msg ):
             return
         cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
         return
-    
     # play games
     if cur_serv.busy :
         if msg.content[:len(prefix)] == prefix:
@@ -318,7 +280,6 @@ async def on_message( msg ):
                 await client.delete_message( msg )
                 return
         return
-            
     # search results
     if ( cur_serv.search_helper.searched == True ):
         if( msg.content.isdigit and msg.author.name == cur_serv.search_helper.search_msg.author.name ):

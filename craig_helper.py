@@ -189,3 +189,37 @@ def get_got_time():
         print_str+=str(next_diff.seconds)+" seconds\n"
     print_str += "```"
     return print_str
+
+def magic_8ball():
+    """Select and return a random answer from the magic 8-ball"""
+    yes = ["It is decidedly so","Without a doubt","Yes, definitely","You can count on it","As I see it: Yes", "Most likely", "Outlook good", "Yes!", "All signs point to yes"]
+    maybe = ["Reply hazy, try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again"]
+    no = ["Don't count on it", "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
+    r = random.randint( 0, 2 )
+    if r == 0 :
+        return yes[ random.randint( 0, len( yes ) ) ]
+    if r == 1 :
+        return maybe[ random.randint( 0, len( maybe ) ) ]
+    if r == 2 :
+        return no[ random.randint( 0, len( no ) ) ]
+    return "what"
+
+def help_string( prefix ):
+    """Construct the string for the help dialogue."""
+    ret_str = "```css\nBeeStingBot help menu\nBot prefix: "+prefix+"\nCommands\n------------```\n"
+    ret_str += "```css\n"
+    ret_str += prefix+"yt <search query>\n"+"    Search YouTube for a video.\n\n"
+    ret_str += prefix+"tmdb <search query>\n"+"    Search TMDb for a movie.\n\n"
+    ret_str += prefix+"got\n    Print brief info on the most recent and next Game of Thrones episode.\n\n"
+    ret_str += prefix+"cr <role_name>\n    Print out status on users that belong to role_name\n            Only information since the bot was last restarted is kept.\n\n"
+    ret_str += prefix+"hangman\n    Start a game of hangman.\n    This will suspend other bot actions until the game is over.\n\n"
+    ret_str += prefix+"qr <role_name>\n    Print out status on users that belong to role_name\n    Only information since the bot was last restarted is kept.\n\n"
+    ret_str += prefix+"8ball <question>\n    Ask the Magic 8-ball a question and see what the fates have in store.\n\n"
+    ret_str += prefix+"auth [user|role] [username|rolename]\n    Returns a list of the users authorized for privileged commands on the server.\n    Privileged commands are denoted with a (+) in the help dialogue\n    If role/user is specified (and a name given) the server will temporarily authorize that user/role.\n\n"
+    ret_str += prefix+"deauth <username|rolename>\n    De-authorize the given role or user. If the user/role is in the authorized config file it will re-load on re-start.\n\n"
+    ret_str += prefix+"gamequit (+)\n    Quit the current game. Does nothing if a game is not in progress.\n\n"
+    ret_str += prefix+"stop (+)\n    Stops the bot.\n\n"
+    ret_str += prefix+"restart (+)\n    Restarts the bot.\n\n"
+    ret_str += prefix+"status (+)\n    Displays status of the bot (PID and start time).\n\n"
+    ret_str += "```"
+    return ret_str
