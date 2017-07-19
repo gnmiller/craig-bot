@@ -72,14 +72,6 @@ async def on_message( msg ):
     # did i send the message?
     if msg.author.name.find( my_name ) >= 0 :
         return
-    # valid cmd
-    msg_prefix = msg.content[:len(prefix)]
-    args = msg.content[len(prefix):].split()
-    if prefix in msg_prefix:
-        if args[0] not in cmds:
-            return
-    else:
-        return
     # get what server sent message
     cur_serv = None
     for s in serv_arr :
@@ -91,6 +83,15 @@ async def on_message( msg ):
         await client.send_message( msg.channel, "Timeout!" )
     not_auth = "You are not authorized to send this command."
     now = pytz.utc.localize( datetime.datetime.now() )
+    # valid cmd
+    msg_prefix = msg.content[:len(prefix)]
+    args = msg.content[len(prefix):].split()
+    if not cur_serv.busy:
+        if prefix in msg_prefix:
+            if args[0] not in cmds:
+                return
+        else:
+            return
     # main processor
     if not cur_serv.busy :
         if args[0] == "qr" :
@@ -247,7 +248,7 @@ async def on_message( msg ):
             return
     
     # cant go in main loop since it checks busy
-    if args[0] == "gamequit" and cur_serv.busy :
+    if msg.content == "!gamequit" and cur_serv.busy :
         if cur_serv.check_auth( msg.author ) == True :
             cur_serv.last_msg = await client.send_message( msg.channel, "```Terminating game of "+cur_serv.game.type+"```\n" )
             cur_serv.reset_game()
