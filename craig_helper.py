@@ -4,6 +4,8 @@ from datetime import date, timedelta
 from dateutil import parser, relativedelta
 from math import floor
 
+cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart"]
+
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
     settings = json.load( f )
@@ -211,7 +213,7 @@ def help_string( prefix ):
     ret_str += prefix+"yt <search query>\n"+"    Search YouTube for a video.\n\n"
     ret_str += prefix+"tmdb <search query>\n"+"    Search TMDb for a movie.\n\n"
     ret_str += prefix+"got\n    Print brief info on the most recent and next Game of Thrones episode.\n\n"
-    ret_str += prefix+"cr <role_name>\n    Print out status on users that belong to role_name\n            Only information since the bot was last restarted is kept.\n\n"
+    ret_str += prefix+"qr <role_name>\n    Print out status on users that belong to role_name\n            Only information since the bot was last restarted is kept.\n\n"
     ret_str += prefix+"hangman\n    Start a game of hangman.\n    This will suspend other bot actions until the game is over.\n\n"
     ret_str += prefix+"qr <role_name>\n    Print out status on users that belong to role_name\n    Only information since the bot was last restarted is kept.\n\n"
     ret_str += prefix+"8ball <question>\n    Ask the Magic 8-ball a question and see what the fates have in store.\n\n"

@@ -1,6 +1,5 @@
 import discord, json, datetime, pytz, os
-from craig_helper import search
-from craig_helper import hangman
+from craig_helper import search, hangman, cmds
 from datetime import timedelta
 
 path = os.path.dirname(os.path.realpath(__file__))
@@ -9,7 +8,6 @@ with open( path+'/authorized.json' ) as f:
 
 class craig_server:
     """Container for Discord.client.server objects and associated helper objects (eg search())"""
-    cmds = [ "got", "yt", "qr", "tmdb", "status", "stop" ]
     def __init__( self, serv, timeout ):
         self.me = serv
         self.search_helper = search( serv.name, timeout )
@@ -19,7 +17,7 @@ class craig_server:
         self.game = None
         self.last_used = {}
         now = pytz.utc.localize( datetime.datetime.now() )
-        for c in self.cmds :
+        for c in cmds :
             self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
         self.auth = {}
         self.auth["role"] = []

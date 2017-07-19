@@ -2,7 +2,7 @@ import discord, asyncio, datetime, json, pytz, os, urllib3, random
 from subprocess import call
 from datetime import timedelta
 from craig_server import craig_server as __serv, craig_user as __user
-from craig_helper import get_got_time, magic_8ball, help_string
+from craig_helper import get_got_time, magic_8ball, help_string, cmds
 
 # load settings file
 path = os.path.dirname(os.path.realpath(__file__))
@@ -70,20 +70,27 @@ async def on_message( msg ):
     # did i send the message?
     if msg.author.name.find( my_name ) >= 0 :
         return
+    # valid cmd
+    msg_prefix = msg.content[:len(prefix)]
+    args = msg.content[len(prefix):].split()
+    if prefix in msg_prefix:
+        if args[0] not in cmds:
+            return
+    else:
+        return
     # get what server sent message
     cur_serv = None
     for s in serv_arr :
         if s.me == msg.server: 
             cur_serv = s
+    # timeout check
     if cur_serv.search_helper.timeout() == True :
         cur_serv.search_helper.clear_search()
         await client.send_message( msg.channel, "Timeout!" )
-        
     not_auth = "You are not authorized to send this command."
     now = pytz.utc.localize( datetime.datetime.now() )
     # main processor
-    if ( msg.content[:len(prefix)].find( prefix ) >= 0 ) and not cur_serv.busy :
-        args = msg.content[len(prefix):].split()
+    if not cur_serv.busy :
         if args[0] == "qr" :
             if (len(args) != 2) :
                 cur_serv.last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
@@ -143,7 +150,7 @@ async def on_message( msg ):
             cur_serv.last_msg = await client.send_message( msg.channel, get_got_time() )
             cur_serv.last_used[ "got" ] = now
             return
-        elif args[0] == "hangman" :
+        elif args[0] == "hangman":
             if cur_serv.search_helper.searched :
                 await client.send_message( msg.channel, "Server is searching, try again in a bit." )
                 return
@@ -236,8 +243,9 @@ async def on_message( msg ):
             return
         else:
             return
+    
     # cant go in main loop since it checks busy
-    if msg.content == "!gamequit" and cur_serv.busy :
+    if args[0] == "gamequit" and cur_serv.busy :
         if cur_serv.check_auth( msg.author ) == True :
             cur_serv.last_msg = await client.send_message( msg.channel, "```Terminating game of "+cur_serv.game.type+"```\n" )
             cur_serv.reset_game()
@@ -247,9 +255,10 @@ async def on_message( msg ):
             return
         cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
         return
+    
     # play games
     if cur_serv.busy :
-        if msg.content[:len(prefix)] == prefix:
+        if msg_prefix == prefix:
             await client.send_message( msg.channel, "Server is busy, try again in a bit!\n" )
             return
         # play hangman
@@ -293,6 +302,7 @@ async def on_message( msg ):
                 await client.delete_message( msg )
                 return
         return
+    
     # search results
     if ( cur_serv.search_helper.searched == True ):
         if( msg.content.isdigit and msg.author.name == cur_serv.search_helper.search_msg.author.name ):
