@@ -21,13 +21,15 @@ class craig_server:
         now = pytz.utc.localize( datetime.datetime.now() )
         for c in self.cmds :
             self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
-        self.auth = []
+        self.auth = {}
+        self.auth["role"] = []
+        self.auth["user"] = []
         users = settings["user"][self.me.name.lower()]
         for u in users.split(',') :
-            self.auth.append( u.lower().strip() )
+            self.auth["user"].append( u.lower().strip() )
         roles = settings["role"][self.me.name.lower()]
         for r in roles.split(',') :
-            self.auth.append( r.lower().strip() )
+            self.auth["role"].append( r.lower().strip() )
 
     def get_role_status( self, role_name ):
         """Return all users in the server that are members of role_name"""
@@ -41,8 +43,7 @@ class craig_server:
     def games( self, mode ):
         if( mode == "hangman" ):
             self.game = hangman()
-            self.busy = True
-            
+            self.busy = True            
     
     def search( self, term, mode, apikey, msg ):
         """Perform a search of term in the specified API, using the provided API key where appropriate. Must be called twice, once with the original mode then again with 'final'. Failure to follow this procedure will usually cause a timeout or other undefined behavior."""
@@ -58,6 +59,65 @@ class craig_server:
             return ""
         else:
             return "Server is busy, try again in a bit!"
+    def reset_game( self ):
+        self.game = None
+        self.busy = False
+        self.mode = None
+        
+    def play_hangman( self, guess )
+        """Play hangman"""
+        if not self.game.type == "hangman":
+            return "no"
+        
+        # validate guess and update array
+        for i in range( 25 ):
+            if guess.lower() == chr( i+97 )
+                if self.game.guesses[ guess ] == False:
+                    self.game.guesses[ guess ] = True
+                else
+                    return "guessed"
+        
+        # is guess in word
+        in_word = False
+        for letter in self.game.word:
+            if guess == letter:
+                in_word = True
+                break
+        if not in_word:
+            self.game.guess_count += 1
+        
+        # check loss
+        if self.game.guess_count >= self.game.max_guesses:
+            self.reset_game()
+            return "loss"
+        
+        # chicken dinner
+        temp_str = ""
+        for letter in self.game.word:
+            if self.game.guesses[ letter ] == True:
+                temp_str += letter
+        if temp_str == self.game.word;
+            self.reset_game()
+            return "won"
+        
+        if in_word:
+            return "in"
+        else:
+            return "out"
+        return
+    
+    def hangman_word( self ):
+        """Return the 'word' formatted to display guessed letters -- Includes a line termination character."""
+        ret_str = ""
+        if self.game.type == "hangman":
+            for letter in self.game.word:
+                if self.game.guesses[ letter ] == True:
+                    ret_str += letter+" "
+                else:
+                    ret_str += "_ "
+            ret_str += "\n"
+        return ret_str
+        
 
 class craig_user:
     """Container for Discord.user. Primarily for tracking the first time they were seen with their current status."""
