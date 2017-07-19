@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from dateutil import parser, relativedelta
 from math import floor
 
-cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","help","h"]
+cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h"]
 
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
