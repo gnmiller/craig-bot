@@ -1,4 +1,5 @@
 *.json
+*orig*
 *sh
 *swp
 *.log
