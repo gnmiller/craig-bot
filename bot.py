@@ -1,10 +1,8 @@
 import discord, asyncio, datetime, json, pytz, os, urllib3, random
-import dateutil.parser
-import dateutil.relativedelta
 from subprocess import call
 from datetime import timedelta
-from craig_server import craig_server as __serv
-from craig_server import craig_user as __user
+from craig_server import craig_server as __serv, craig_user as __user
+from craig_helper import get_got_time, magic_8ball, help_string, cmds
 
 # load settings file
 path = os.path.dirname(os.path.realpath(__file__))
@@ -21,91 +19,8 @@ my_name = settings["bot"]["my_name"]
 last_msg = None
 started = False
 date_format = "%m/%d/%y %I:%M %p"
-authorized = ["btcraig","klobb"]
-
-def check_auth( user, cur ):
-    """Check if a user is authorized for a server."""
-    for r in user.roles :
-        for a in cur.auth :
-            if r.name.lower() == a :
-                return True
-    for a in cur.auth :
-        if a.lower() == user.name.lower() :
-            return True
-    return False
-
-def magic_8ball():
-    yes = ["It is decidedly so","Without a doubt","Yes, definitely","You can count on it","As I see it: Yes", "Most likely", "Outlook good", "Yes!", "All signs point to yes"]
-    maybe = ["Reply hazy, try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again"]
-    no = ["Don't count on it", "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
-    r = random.randint( 0, 2 )
-    if r == 0 :
-        return yes[ random.randint( 0, len( yes ) ) ]
-    if r == 1 :
-        return maybe[ random.randint( 0, len( maybe ) ) ]
-    if r == 2 :
-        return no[ random.randint( 0, len( no ) ) ]
-    return "what"
-
-def help_string():
-    ret_str = "```css\nBeeStingBot help menu\nBot prefix: "+prefix+"\nCommands\n------------```\n"
-    ret_str += "```css\n"
-    ret_str += prefix+"yt <search query>\n"+"    Search YouTube for a video.\n\n"
-    ret_str += prefix+"tmdb <search query>\n"+"    Search TMDb for a movie.\n\n"
-    ret_str += prefix+"got\n    Print brief info on the most recent and next Game of Thrones episode.\n\n"
-    ret_str += prefix+"cr <role_name>\n    Print out status on users that belong to role_name\n            Only information since the bot was last restarted is kept.\n\n"
-    ret_str += prefix+"hangman\n    Start a game of hangman.\n    This will suspend other bot actions until the game is over.\n"
-    ret_str += prefix+"qr <role_name>\n    Print out status on users that belong to role_name\n    Only information since the bot was last restarted is kept.\n\n"
-    ret_str += prefix+"8ball <question>\n    Ask the Magic 8-ball a question and see what the fates have in store.\n\n"
-    ret_str += prefix+"auth\n    Returns a list of the users authorized for privileged commands on the server.\n    Privileged commands are denoted with a (+) in the help dialogue\n\n"
-    ret_str += prefix+"gamequit (+)\n    Quit the current game. Does nothing if a game is not in progress.\n\n"
-    ret_str += prefix+"stop (+)\n    Stops the bot.\n\n"
-    ret_str += prefix+"restart (+)\n    Restarts th bot.\n\n"
-    ret_str += prefix+"status (+)\n    Displays status of the bot (PID and start time).\n\n"
-    ret_str += "```"
-    return ret_str
-
-def get_got_time():
-    """Returns a formatted string with the time until the next and time from the previous GoT episode. Episode name is also returned in the string."""
-    cur = datetime.datetime.now()
-    uri = "http://api.tvmaze.com/shows/82?embed[]=nextepisode&embed[]=previousepisode"
-    http = urllib3.PoolManager()
-    response = http.request( 'GET', uri )
-    data = json.loads( response.data.decode( 'utf-8' ) )
-    next_ep = dateutil.parser.parse( data["_embedded"]["nextepisode"]["airstamp"] )
-    next_ep_name = data["_embedded"]["nextepisode"]["name"]
-    prev_ep = dateutil.parser.parse( data["_embedded"]["previousepisode"]["airstamp"] )
-    prev_ep_name = data["_embedded"]["previousepisode"]["name"]
-    cur = pytz.utc.localize( cur )
-    next_diff = dateutil.relativedelta.relativedelta( next_ep, cur )
-    prev_diff = dateutil.relativedelta.relativedelta( prev_ep, cur )
-    print_str = "```smalltalk\nLast Episode: "+prev_ep_name+" aired "
-    if (abs(prev_diff.months) > 0):
-        print_str+=str(abs(prev_diff.months))+" months "
-    if (abs(prev_diff.days) > 0):
-        print_str+=str(abs(prev_diff.days))+" days "
-    if (abs(prev_diff.hours) > 0):
-        print_str+=str(abs(prev_diff.hours))+" hours "
-    if (abs(prev_diff.minutes) > 0):
-        print_str+=str(abs(prev_diff.minutes))+" minutes and "
-    if (abs(prev_diff.seconds) > 0):
-        print_str+=str(abs(prev_diff.seconds))+" seconds ago\n"
-    print_str+="Next Episode: "+next_ep_name+" airs in "
-    if next_diff.months > 0 :
-        print_str+=str(next_diff.months)+" months "
-    if next_diff.days > 0 :
-        print_str+=str(next_diff.days)+" days "
-    if next_diff.hours > 0 :
-        print_str+=str(next_diff.hours)+" hours "
-    if next_diff.minutes > 0 :
-        print_str+=str(next_diff.minutes)+" minutes and "
-    if next_diff.seconds > 0 :
-        print_str+=str(next_diff.seconds)+" seconds\n"
-    print_str += "```"
-    return print_str
 
 serv_arr = []
-authorized = ["btcraig"]
 @client.event
 async def on_ready():
     global started
@@ -120,9 +35,11 @@ async def on_ready():
         for u in s.me.members :
             tmp = __user( u, u.status, pytz.utc.localize( datetime.datetime.now() ) )
             s.users.append( tmp )
+    await client.change_presence( game=discord.Game( name='Deez Nuts in ' + str(len( client.servers ))+" servers" ) )
     print( "startup finished" )
     started = True
 
+<<<<<<< HEAD
         
 @client.event
 async def on_server_join( server ):
@@ -137,12 +54,25 @@ async def on_server_join( server ):
     serv_arr.append( new_server )
     return
 
+=======
+@client.event
+async def on_server_join( server ):
+    for s in serv_arr:
+        if s.me.name == server.name:
+            return
+    new_serv = __serv( server, max_time )
+    for u in s.me.members:
+        tmp = __user( u, u.state, datetime.datetime.now() )
+        s.users.append( tmp )
+    serv_arr.append( new_serv )
+    await client.change_presence( game=discord.Game( name='Deez Nuts in ' + str(len( client.servers ))+" servers" ) )
+    
+>>>>>>> development
 @client.event
 async def on_member_update( before, after ):
     global started
     if not started:
         return
-    
     for s in serv_arr :
         for u in s.users :
             # user match AND status change
@@ -154,34 +84,38 @@ async def on_member_update( before, after ):
 @client.event
 async def on_message( msg ):
     global started
-    
     if not started:
         return
-    
     # did i send the message?
     if msg.author.name.find( my_name ) >= 0 :
         return
-    
     # get what server sent message
     cur_serv = None
     for s in serv_arr :
         if s.me == msg.server: 
             cur_serv = s
-            
+    # timeout check
     if cur_serv.search_helper.timeout() == True :
         cur_serv.search_helper.clear_search()
         await client.send_message( msg.channel, "Timeout!" )
-    
     not_auth = "You are not authorized to send this command."
     now = pytz.utc.localize( datetime.datetime.now() )
+    # valid cmd
+    msg_prefix = msg.content[:len(prefix)]
+    args = msg.content[len(prefix):].split()
+    if not cur_serv.busy:
+        if prefix in msg_prefix:
+            if args[0] not in cmds:
+                return
+        else:
+            return
     # main processor
-    if ( msg.content[:len(prefix)].find( prefix ) >= 0 ) and not cur_serv.busy :
-        args = msg.content[len(prefix):].split()
+    if not cur_serv.busy :
         if args[0] == "qr" :
             if (len(args) != 2) :
                 cur_serv.last_msg = await client.send_message( msg.channel, "```Usage:\n    "+prefix+"cr role_name```" )
                 return
-            if cur_serv.last_used[ "qr" ] >= ( now + timedelta( minutes=-2 ) ) :
+            if not now >= ( cur_serv.last_used["qr"] + timedelta( minutes=2 ) ):
                 cur_serv.last_msg = await client.send_message( msg.channel, "Slow down!\n" )
                 return
             res = []
@@ -230,13 +164,13 @@ async def on_message( msg ):
             return
         elif args[0] == "got" :
             now = pytz.utc.localize( datetime.datetime.now() )
-            if now >= (cur_serv.last_used[ "got" ] + timedelta( minutes=-5 )) :
+            if not now >= ( cur_serv.last_used[ "got" ] + timedelta( minutes=5 )) :
                 cur_serv.last_msg = await client.send_message( msg.channel, "Slow down!" )
                 return
             cur_serv.last_msg = await client.send_message( msg.channel, get_got_time() )
             cur_serv.last_used[ "got" ] = now
             return
-        elif args[0] == "hangman" :
+        elif args[0] == "hangman":
             if cur_serv.search_helper.searched :
                 await client.send_message( msg.channel, "Server is searching, try again in a bit." )
                 return
@@ -250,24 +184,24 @@ async def on_message( msg ):
             cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "help" or args[0] == "h" :
-            cur_serv.last_message = await client.send_message( msg.author, help_string() )
+            cur_serv.last_message = await client.send_message( msg.author, help_string( prefix ) )
             return
         elif args[0] == "restart" :
-            if check_auth( msg.author, cur_serv ) == True :
+            if cur_serv.check_auth( msg.author ) == True :
                 cur_serv.last_msg = await client.send_message( msg.channel, "Restarting bot." )
                 call( ["service", "craig-bot", "restart"] )
                 return
             cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
             return
         elif args[0] == "stop" :
-            if check_auth( msg.author, cur_serv ) == True :
+            if cur_serv.check_auth( msg.author ) == True :
                 cur_serv.last_msg = await client.send_message( msg.channel, "Stopping bot." )
                 call( ["service", "craig-bot", "stop"] )
                 return
             cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
             return
         elif args[0] == "status" :
-            if check_auth( msg.author, cur_serv ) == True :
+            if cur_serv.check_auth( msg.author ) == True :
                 my_pid = os.getpid()
                 created = os.path.getmtime( "/proc/"+str(my_pid) )
                 creat_str = "```smalltalk\nBot running with PID "+str(my_pid)+" since "
@@ -277,14 +211,45 @@ async def on_message( msg ):
                 return
             cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
             return
-        elif args[0] == "auth" :
-            ret_str = "```The following users and roles (in no order) are authorized for this server: \n"
-            for a in cur_serv.auth :
-                ret_str += a+"\n"
-            ret_str += "```"
-            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
-            return
-        elif args[0] == "8ball" :
+        elif args[0] == "auth":
+            if len(args) == 1:
+                ret_str = "```The following users and roles are authorized for this server: \nUsers\n----------------\n"
+                if len(cur_serv.auth["user"]) <= 0:
+                    ret_str += "None\n"
+                for a in cur_serv.auth["user"]:
+                    ret_str += a+"\n"
+                ret_str += "----------------\nRoles\n----------------\n"
+                if len(cur_serv.auth["role"]) <= 0:
+                    ret_str += "None\n"
+                for a in cur_serv.auth["role"]:
+                    ret_str += a+"\n"
+                ret_str += "```"
+                cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
+                return
+            elif len(args) == 3:
+                if cur_serv.check_auth( msg.author ):
+                    cur_serv.add_auth( args[2], args[1] )
+                    cur_serv.last_msg = await client.send_message( msg.channel, "Adding new "+args[1]+" to the server's auth list with name: "+args[2]+" (temporarily).\n" )
+                    return
+                else:
+                    cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
+                    return
+            else:
+                cur_sev.last_msg = await client.send_message( msg.channel, "Bad format! Check the help dialogue.\n" )
+                return
+        elif args[0] == "deauth":
+            if cur_serv.check_auth( msg.author ):
+                if len(args) == 1:
+                    cur_serv.last_msg = await client.send_message( msg.channel, "You need to specify a name!\n" )
+                if cur_serv.del_auth( args[1] ) == True:
+                    cur_serv.last_msg = await client.send_message( msg.channel, "Removing "+args[1]+" from the authorized list.\n" )
+                    return
+                cur_serv.last_msg = await client.send_message( msg.channel, "It doesn't look like "+args[1]+" was in the authorized list.\n" )
+                return
+            else:
+                cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
+                return
+        elif args[0] == "8ball":
             question = "```You asked: \n"
             if len(args) == 1 :
                 cur_serv.last_msg = await client.send_message( msg.channel, "You didn't ask me anything!" )
@@ -301,10 +266,9 @@ async def on_message( msg ):
     
     # cant go in main loop since it checks busy
     if msg.content == "!gamequit" and cur_serv.busy :
-        if check_auth( msg.author, cur_serv ) == True :
-            cur_serv.last_msg = await client.send_message( msg.channel, "Terminating game of"+cur_serv.game.type+"```\n" )
-            cur_serv.game = None
-            cur_serv.busy = False
+        if cur_serv.check_auth( msg.author ) == True :
+            cur_serv.last_msg = await client.send_message( msg.channel, "```Terminating game of "+cur_serv.game.type+"```\n" )
+            cur_serv.reset_game()
             return
         if not cur_serv.busy:
             cur_serv.last_msg = await client.send_message( msg.channel, "Doesn't look you're playing any games here right now, m8.\n" )
@@ -314,67 +278,51 @@ async def on_message( msg ):
     
     # play games
     if cur_serv.busy :
-        if msg.content[:len(prefix)] == prefix:
+        if msg_prefix == prefix:
             await client.send_message( msg.channel, "Server is busy, try again in a bit!\n" )
             return
+        # play hangman
         if cur_serv.game.type == "hangman" :
+            guess = msg.content
+            word = cur_serv.game.word
             # valid guess
-            if len(msg.content) != 1 : # invalid guess
+            if len( guess ) != 1 : # invalid guess
                 return
-            # check if guess is char and update guess table
-            for i in range( 25 ):
-                if msg.content.lower() == chr( i+97 ):
-                    if cur_serv.game.guesses[ msg.content ] == False:
-                        cur_serv.game.guesses[ msg.content ] = True
-                    else:
-                        await client.send_message( msg.channel, msg.content+" has already been guessed!\n" )
-                        await client.delete_message( msg )
-                        return
-            # guess in word
-            in_word = False
-            for letter in cur_serv.game.word :
-                if msg.content == letter:
-                    in_word = True
-                    break
-            if not in_word:
-                cur_serv.game.guess_count += 1
-            # loss
-            if cur_serv.game.guess_count >= cur_serv.game.max_guesses:
-                ret_str = "```Game over!\nThe word was: "+cur_serv.game.word+"```"
-                cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
-                cur_serv.game = None
-                cur_serv.busy = False
+            # game state post guess
+            status = cur_serv.play_hangman( guess )
+            if status == "no":
+                await client.send_message( msg.channel, "Doesn't look like we're playing hangman!\n" )
                 return
-            ret_str = "```Guesses Left: "+str( cur_serv.game.max_guesses - cur_serv.game.guess_count )+"\n"
-            # build the current 'word'
-            t_str = ""
-            for letter in cur_serv.game.word :
-                if cur_serv.game.guesses[ letter ] == True:
-                    ret_str += letter+" "
-                    t_str += letter
-                else:
-                    ret_str += "_ "
-            # chicken dinner
-            if t_str == cur_serv.game.word :
-                ret_str = "```Game over, you guessed the word!\nAnswer: "+cur_serv.game.word+"```"
+            if status == "guessed":
+                await client.send_message( msg.channel, guess+" has already been guessed!\n" )
+                await client.delete_message( msg )
+                return
+            if status == "loss":
+                ret_str = "```Game over!\nThe word was: "+word+"```\n"
                 await client.delete_message( msg )
                 cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
-                cur_serv.game = None
-                cur_serv.busy = False
                 return
-            ret_str += "\n"
-            if in_word:
-                ret_str += '"'+msg.content+'"'+" is in the word!\n"
-            else:
-                ret_str += '"'+msg.content+'"'+" is not in the word!\n"
-            ret_str += "```"
-            cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
-            await client.delete_message( msg )
-            return
-        else:
-            return
+            if status == "won":
+                ret_str = "```Congratulations! You guessed the word: "+word+"```\n"
+                await client.delete_message( msg )
+                cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
+                return
+            # play the game
+            board = cur_serv.hangman_word()
+            remain = cur_serv.game.max_guesses - cur_serv.game.guess_count
+            ret_str = "```Guesses left: "+str(remain)+"\n"
+            if status == "in":
+                ret_str += board+"\n"+guess+" is in the word!\n```"
+                cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
+                await client.delete_message( msg )
+                return
+            if status == "out":
+                ret_str += board+"\n"+guess+" is not in the word.\n```"
+                cur_serv.last_msg = await client.edit_message( cur_serv.last_msg, ret_str )
+                await client.delete_message( msg )
+                return
         return
-            
+    
     # search results
     if ( cur_serv.search_helper.searched == True ):
         if( msg.content.isdigit and msg.author.name == cur_serv.search_helper.search_msg.author.name ):
