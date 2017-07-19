@@ -39,8 +39,6 @@ async def on_ready():
     print( "startup finished" )
     started = True
 
-<<<<<<< HEAD
-        
 @client.event
 async def on_server_join( server ):
     print( "new server!" )
@@ -54,7 +52,6 @@ async def on_server_join( server ):
     serv_arr.append( new_server )
     return
 
-=======
 @client.event
 async def on_server_join( server ):
     for s in serv_arr:
@@ -67,7 +64,6 @@ async def on_server_join( server ):
     serv_arr.append( new_serv )
     await client.change_presence( game=discord.Game( name='Deez Nuts in ' + str(len( client.servers ))+" servers" ) )
     
->>>>>>> development
 @client.event
 async def on_member_update( before, after ):
     global started
