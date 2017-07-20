@@ -318,6 +318,9 @@ async def on_message( msg ):
             num_dice = random.randint(1,4)
             which = random.randint( 0, len( dice )-2 )
             size = 0
+            # no baby dicks
+            if (which == 1 or which == 2) and num_dice == 1:
+                num_dice = 2
             for i in range( num_dice ):
                 size += random.randint( 1, dice[which] )
             ret_str += str(size)+" inches.\n```"
