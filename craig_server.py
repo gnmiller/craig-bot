@@ -1,6 +1,7 @@
 import discord, json, datetime, pytz, os
 from craig_helper import search, hangman, cmds
 from datetime import timedelta
+from rpg import player, monster
 
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
@@ -15,6 +16,7 @@ class craig_server:
         self.last_msg = None
         self.busy = False
         self.game = None
+        self.cur_mon = None
         self.last_used = {}
         now = pytz.utc.localize( datetime.datetime.now() )
         for c in cmds :
@@ -170,6 +172,18 @@ class craig_server:
                     ret_str += "_ "
             ret_str += "\n"
         return ret_str
+    
+    def create_char( self, user, kind ):
+        if not user.char == None:
+            return "You have already created a "+user.char._class+".\n"
+        user.char = player( kind )
+        return "Creating a new "+kind+" for you now.\n"
+    
+    def spawn_monster( self ):
+        if not self.cur_mon == None:
+            return "You are already battling! Defeat the current monster first.\n"
+        self.cur_mon = monster( random.randint( 0,3 ), 1000, 10.0 )
+        return "A "+self.cur_mon.kind+" has appeared! Defeat it quickly!\n"
 
 class craig_user:
     """Container for Discord.user. Primarily for tracking the first time they were seen with their current status."""
@@ -178,5 +192,6 @@ class craig_user:
         self.status = status
         self.time = pytz.utc.localize( datetime.datetime.now() )
         self.donger = 0
+        self.char = None
     
         

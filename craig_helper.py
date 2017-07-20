@@ -5,7 +5,7 @@ from dateutil import parser, relativedelta
 from math import floor
 import signal
 
-cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h","save_auth","load_auth","donger","slice"]
+cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h","save_auth","load_auth","donger","slice","create","disp"]
 dice = [4, 6, 8, 12]
 
 path = os.path.dirname(os.path.realpath(__file__))
@@ -257,3 +257,17 @@ def help_string2( prefix ):
     ret_str += prefix+"status (+)\n    Displays status of the bot (PID and start time).\n\n"
     ret_str += "```"
     return ret_str
+
+def get_user( server, user ):
+    """discord.user -> craig_user"""
+    for u in server.users:
+        if u.me.name.lower() == user.name.lower():
+            return u
+    return None
+
+def user_by_name( server, name ):
+    """name -> craig_user"""
+    for u in server.users:
+        if u.me.name.lower() == name.lower():
+            return u
+    return None
