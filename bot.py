@@ -2,7 +2,7 @@ import discord, asyncio, datetime, json, pytz, os, urllib3, random
 from subprocess import call
 from datetime import timedelta
 from craig_server import craig_server as __serv, craig_user as __user
-from craig_helper import get_got_time, magic_8ball, help_string, cmds, save_auth, reload_auth, dice
+from craig_helper import get_got_time, magic_8ball, help_string1, help_string2, cmds, save_auth, reload_auth, dice
 import random
 
 # load settings file
@@ -186,7 +186,8 @@ async def on_message( msg ):
             cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
             return
         elif args[0] == "help" or args[0] == "h":
-            cur_serv.last_message = await client.send_message( msg.author, help_string( prefix ) )
+            cur_serv.last_message = await client.send_message( msg.author, help_string1( prefix ) )
+            cur_serv.last_message = await client.send_message( msg.author, help_string2( prefix ) )
             return
         elif args[0] == "restart":
             if cur_serv.check_auth( msg.author ) == True:
