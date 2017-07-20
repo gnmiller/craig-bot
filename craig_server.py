@@ -176,6 +176,7 @@ class craig_user:
     def __init__( self, user, status, time ):
         self.me = user
         self.status = status
-        self.time = datetime.datetime.now()
-        
+        self.time = pytz.utc.localize( datetime.datetime.now() )
+        self.donger = 0
+    
         

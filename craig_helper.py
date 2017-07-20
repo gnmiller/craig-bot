@@ -5,7 +5,8 @@ from dateutil import parser, relativedelta
 from math import floor
 import signal
 
-cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h","save_auth","load_auth"]
+cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h","save_auth","load_auth","donger","slice"]
+dice = [4, 6, 8, 12]
 
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
@@ -227,8 +228,7 @@ def save_auth( servers, auth_file ):
 def reload_auth( servers, auth_file ):
     for s in servers:
         s.load_auth( auth_file )
-    return
-    
+    return        
 
 def help_string( prefix ):
     """Construct the string for the help dialogue."""

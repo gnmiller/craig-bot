@@ -2,7 +2,8 @@ import discord, asyncio, datetime, json, pytz, os, urllib3, random
 from subprocess import call
 from datetime import timedelta
 from craig_server import craig_server as __serv, craig_user as __user
-from craig_helper import get_got_time, magic_8ball, help_string, cmds, save_auth, reload_auth
+from craig_helper import get_got_time, magic_8ball, help_string, cmds, save_auth, reload_auth, dice
+import random
 
 # load settings file
 path = os.path.dirname(os.path.realpath(__file__))
@@ -276,6 +277,61 @@ async def on_message( msg ):
             ret_str += magic_8ball()+"```\n"
             cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
             return
+        elif args[0] == "donger":
+            cur_user = None
+            search_name = None
+            # check if its someone else's donger
+            if len(args) == 1:
+                search_name = msg.author.name.lower()
+            else:
+                search_name = args[1].lower()
+                if search_name[1] == '@':
+                    id = search_name[2:len(search_name)-1]
+                    for u in cur_serv.users:
+                        if u.me.id == id:
+                            search_name = u.me.name
+                            break
+            # check if they have a size yet
+            for u in cur_serv.users:
+                if u.me.name.lower() == search_name.lower():
+                    cur_user = u
+                    if u.donger != 0:
+                        if len(args) == 1:
+                            ret_str = "```Your donger is: "+str(u.donger)+" inches.\n```"
+                            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
+                            return
+                        else:
+                            ret_str = "```"+u.me.name+"'s donger is: "+str(u.donger)+" inches.\n```"
+                            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
+                            return
+                    break
+            # make sure they exist
+            if cur_user == None:
+                cur_serv.last_msg = await client.send_message( msg.channel, "No user by that name here.\n" )
+                return
+            # do the needful
+            if len(args) == 1:
+                ret_str = "```Your donger is: "
+            else:
+                ret_str = "```"+u.me.name+"'s donger is: "
+            num_dice = random.randint(1,4)
+            which = random.randint( 0, len( dice )-2 )
+            size = 0
+            for i in range( num_dice ):
+                size += random.randint( 1, dice[which] )
+            ret_str += str(size)+" inches.\n```"
+            cur_user.donger = size
+            cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
+            return
+        elif args[0] == "slice":
+            if cur_serv.check_auth( msg.author ):
+                for u in cur_serv.users:
+                    u.donger = 0
+                cur_serv.last_msg = await client.send_message( msg.channel, "Setting everybody's donger size back to 0!\n" )
+                return
+            else:
+                cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
+                return
         else:
             return
     
