@@ -9,7 +9,7 @@
     },
     "tmdb":
     {
-        "token":"TMDB v3 TOKEN"
+        "token":"TMDBv3 KEY"
     },
     "bot":
     {
