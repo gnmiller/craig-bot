@@ -3,8 +3,9 @@ from apiclient.discovery import build
 from datetime import date, timedelta
 from dateutil import parser, relativedelta
 from math import floor
+import signal
 
-cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h"]
+cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h","save_auth","load_auth"]
 
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
@@ -126,7 +127,7 @@ class search:
             return "what"
         self.search_clear()
         return ret_str
-    
+        
 class hangman:
     """Hangman game. max_guesses can be modified for longer or shorter games. NOTE: Requires /usr/share/dict/words (provided by package words). Also any non-alphanumeric characters are removed before starting."""
     def __init__( self ):
@@ -205,6 +206,30 @@ def magic_8ball():
     if r == 2 :
         return no[ random.randint( 0, len( no ) ) ]
     return "what"
+
+def save_auth( servers, auth_file ):
+    """Write the auth file with the current auth state for all servers. This is destructive and will clobber the existing file."""
+    data = {}
+    data["user"] = {}
+    data["role"] = {}
+    for s in servers:
+        serv_name = s.me.name.lower()
+        data["user"][serv_name] = []
+        data["role"][serv_name] = []
+        for u in s.auth["user"]:
+            data["user"][serv_name].append( u.lower().strip() )
+        for r in s.auth["role"]:
+            data["role"][serv_name].append( r.lower().strip() )
+    print( data )
+    with open(auth_file, 'w') as f:
+        json.dump(data, f, ensure_ascii=False)
+    return
+
+def reload_auth( servers, auth_file ):
+    for s in servers:
+        s.load_auth( auth_file )
+    return
+    
 
 def help_string( prefix ):
     """Construct the string for the help dialogue."""

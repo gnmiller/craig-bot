@@ -2,12 +2,13 @@ import discord, asyncio, datetime, json, pytz, os, urllib3, random
 from subprocess import call
 from datetime import timedelta
 from craig_server import craig_server as __serv, craig_user as __user
-from craig_helper import get_got_time, magic_8ball, help_string, cmds
+from craig_helper import get_got_time, magic_8ball, help_string, cmds, save_auth, reload_auth
 
 # load settings file
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
     settings = json.load( f )
+auth_file = path+'/authorized.json'
     
 client = discord.Client()
 discord_key = settings["discord"]["token"]
@@ -235,7 +236,7 @@ async def on_message( msg ):
                     cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
                     return
             else:
-                cur_sev.last_msg = await client.send_message( msg.channel, "Bad format! Check the help dialogue.\n" )
+                cur_serv.last_msg = await client.send_message( msg.channel, "Bad format! Check the help dialogue.\n" )
                 return
         elif args[0] == "deauth":
             if cur_serv.check_auth( msg.author ):
@@ -248,6 +249,18 @@ async def on_message( msg ):
                 return
             else:
                 cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
+                return
+        elif args[0] == "save_auth":
+            if cur_serv.check_auth( msg.author ):
+                if len(args) != 1:
+                    return
+                save_auth( serv_arr, auth_file )
+                return
+        elif args[0] == "load_auth":
+            if cur_serv.check_auth( msg.author ):
+                if len(args) != 1:
+                    return
+                reload_auth( serv_arr, auth_file )
                 return
         elif args[0] == "8ball":
             question = "```You asked: \n"
@@ -331,6 +344,7 @@ async def on_message( msg ):
             return
         else:
             return
+        
 # bottom of on_message()       
 
 client.run( discord_key )

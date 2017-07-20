@@ -2,10 +2,6 @@ import discord, json, datetime, pytz, os
 from craig_helper import search, hangman, cmds
 from datetime import timedelta
 
-path = os.path.dirname(os.path.realpath(__file__))
-with open( path+'/authorized.json' ) as f:
-    settings = json.load( f )
-
 class craig_server:
     """Container for Discord.client.server objects and associated helper objects (eg search())"""
     def __init__( self, serv, timeout ):
@@ -19,25 +15,24 @@ class craig_server:
         now = pytz.utc.localize( datetime.datetime.now() )
         for c in cmds :
             self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
-        self.auth = []
-        if self.me.name.lower() in settings["user"]:
-            users = settings["user"][self.me.name.lower()]
-            for u in users.split(',') :
-                self.auth.append( u.lower().strip() )
-        if self.me.name.lower() in settings["role"]:
-            roles = settings["role"][self.me.name.lower()]
-            for r in roles.split(',') :
-                self.auth.append( r.lower().strip() )
+        self.load_auth( "./authorized.json" )
+                
+    def load_auth( self, auth_file ):
+        """Load auth data"""
+        path = os.path.dirname(os.path.realpath(__file__))
+        with open( auth_file, 'r' ) as f:
+            auth_data = json.load( f )
         self.auth = {}
         self.auth["role"] = []
         self.auth["user"] = []
-        if self.me.name in settings["user"]:
-            users = settings["user"][self.me.name.lower()]
-            for u in users.split(',') :
+        my_name = self.me.name.lower()
+        if my_name in auth_data["user"]:
+            users = auth_data["user"][my_name]
+            for u in users:
                 self.auth["user"].append( u.lower().strip() )
-        if self.me.name in settings["role"]:
-            roles = settings["role"][self.me.name.lower()]
-            for r in roles.split(',') :
+        if my_name in auth_data["role"]:
+            roles = auth_data["role"][my_name]
+            for r in roles:
                 self.auth["role"].append( r.lower().strip() )
 
     def get_role_status( self, role_name ):
@@ -111,6 +106,12 @@ class craig_server:
         self.game = None
         self.busy = False
         self.mode = None
+        return
+        
+    def reset_search( self ):
+        """Warpper for search clear function"""
+        self.search_helper.clear_search()
+        return
         
     def play_hangman( self, guess ):
         """Play hangman"""
@@ -165,7 +166,7 @@ class craig_server:
                     ret_str += "_ "
             ret_str += "\n"
         return ret_str
-        
+
 class craig_user:
     """Container for Discord.user. Primarily for tracking the first time they were seen with their current status."""
     def __init__( self, user, status, time ):
