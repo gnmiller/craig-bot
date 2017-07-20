@@ -2,6 +2,10 @@ import discord, json, datetime, pytz, os
 from craig_helper import search, hangman, cmds
 from datetime import timedelta
 
+path = os.path.dirname(os.path.realpath(__file__))
+with open( path+'/settings.json' ) as f:
+    settings = json.load( f )
+
 class craig_server:
     """Container for Discord.client.server objects and associated helper objects (eg search())"""
     def __init__( self, serv, timeout ):
@@ -15,7 +19,7 @@ class craig_server:
         now = pytz.utc.localize( datetime.datetime.now() )
         for c in cmds :
             self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
-        self.load_auth( "./authorized.json" )
+        self.load_auth( settings["bot"]["auth_file"] )
                 
     def load_auth( self, auth_file ):
         """Load auth data"""

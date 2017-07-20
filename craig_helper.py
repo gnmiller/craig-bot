@@ -168,30 +168,30 @@ def get_got_time():
     cur = pytz.utc.localize( cur )
     next_diff = relativedelta.relativedelta( next_ep, cur )
     prev_diff = relativedelta.relativedelta( prev_ep, cur )
-    print_str = "```smalltalk\nLast Episode: "+prev_ep_name+" aired "
+    ret_str = "```smalltalk\nLast Episode: "+prev_ep_name+" aired "
     if (abs(prev_diff.months) > 0):
-        print_str+=str(abs(prev_diff.months))+" months "
+        ret_str+=str(abs(prev_diff.months))+" months "
     if (abs(prev_diff.days) > 0):
-        print_str+=str(abs(prev_diff.days))+" days "
+        ret_str+=str(abs(prev_diff.days))+" days "
     if (abs(prev_diff.hours) > 0):
-        print_str+=str(abs(prev_diff.hours))+" hours "
+        ret_str+=str(abs(prev_diff.hours))+" hours "
     if (abs(prev_diff.minutes) > 0):
-        print_str+=str(abs(prev_diff.minutes))+" minutes and "
+        ret_str+=str(abs(prev_diff.minutes))+" minutes and "
     if (abs(prev_diff.seconds) > 0):
-        print_str+=str(abs(prev_diff.seconds))+" seconds ago\n"
-    print_str+="Next Episode: "+next_ep_name+" airs in "
+        ret_str+=str(abs(prev_diff.seconds))+" seconds ago\n"
+    ret_str+="Next Episode: "+next_ep_name+" airs in "
     if next_diff.months > 0 :
-        print_str+=str(next_diff.months)+" months "
+        ret_str+=str(next_diff.months)+" months "
     if next_diff.days > 0 :
-        print_str+=str(next_diff.days)+" days "
+        ret_str+=str(next_diff.days)+" days "
     if next_diff.hours > 0 :
-        print_str+=str(next_diff.hours)+" hours "
+        ret_str+=str(next_diff.hours)+" hours "
     if next_diff.minutes > 0 :
-        print_str+=str(next_diff.minutes)+" minutes and "
+        ret_str+=str(next_diff.minutes)+" minutes and "
     if next_diff.seconds > 0 :
-        print_str+=str(next_diff.seconds)+" seconds\n"
-    print_str += "```"
-    return print_str
+        ret_str+=str(next_diff.seconds)+" seconds\n"
+    ret_str += "```"
+    return ret_str
 
 def magic_8ball():
     """Select and return a random answer from the magic 8-ball"""
@@ -220,7 +220,6 @@ def save_auth( servers, auth_file ):
             data["user"][serv_name].append( u.lower().strip() )
         for r in s.auth["role"]:
             data["role"][serv_name].append( r.lower().strip() )
-    print( data )
     with open(auth_file, 'w') as f:
         json.dump(data, f, ensure_ascii=False)
     return
@@ -242,8 +241,10 @@ def help_string( prefix ):
     ret_str += prefix+"hangman\n    Start a game of hangman.\n    This will suspend other bot actions until the game is over.\n\n"
     ret_str += prefix+"qr <role_name>\n    Print out status on users that belong to role_name\n    Only information since the bot was last restarted is kept.\n\n"
     ret_str += prefix+"8ball <question>\n    Ask the Magic 8-ball a question and see what the fates have in store.\n\n"
-    ret_str += prefix+"auth [user|role] [username|rolename]\n    Returns a list of the users authorized for privileged commands on the server.\n    Privileged commands are denoted with a (+) in the help dialogue\n    If role/user is specified (and a name given) the server will temporarily authorize that user/role.\n    Does not check if role or user actually exists\n\n"
-    ret_str += prefix+"deauth <username|rolename>\n    De-authorize the given role or user. If the user/role is in the authorized config file it will re-load on re-start.\n\n"
+    ret_str += prefix+"auth [user|role] [username|rolename] (+)\n    Returns a list of the users authorized for privileged commands on the server.\n    Privileged commands are denoted with a (+) in the help dialogue\n    If role/user is specified (and a name given) the server will temporarily authorize that user/role.\n    Does not check if role or user actually exists\n\n"
+    ret_str += prefix+"deauth <username|rolename> (+)\n    De-authorize the given role or user. If the user/role is in the authorized config file it will re-load on re-start.\n\n"
+    ret_str += prefix+"save_auth (+)\n    Write the auth data out to file.\n    This is destructive and will clobbed the contents of authorized.json\n\n"
+    ret_str += prefix+"load_auth (+)\n    Load the auth data from the auth file.\nThis will clobber any temporary authorizations unless they are saved first.\n\n"
     ret_str += prefix+"gamequit (+)\n    Quit the current game. Does nothing if a game is not in progress.\n\n"
     ret_str += prefix+"stop (+)\n    Stops the bot.\n\n"
     ret_str += prefix+"restart (+)\n    Restarts the bot.\n\n"

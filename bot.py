@@ -8,7 +8,6 @@ from craig_helper import get_got_time, magic_8ball, help_string, cmds, save_auth
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
     settings = json.load( f )
-auth_file = path+'/authorized.json'
     
 client = discord.Client()
 discord_key = settings["discord"]["token"]
@@ -17,6 +16,7 @@ tmdb_key = settings["tmdb"]["token"]
 prefix = settings["bot"]["prefix"]
 max_time = settings["bot"]["timeout"]
 my_name = settings["bot"]["my_name"]
+auth_file = settings["bot"]["auth_file"]
 last_msg = None
 started = False
 date_format = "%m/%d/%y %I:%M %p"

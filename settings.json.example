@@ -15,7 +15,7 @@
     {
         "prefix":"!",
         "timeout":"TIMEOUT TIME",
-        "logfile":"/path/to/logs"
+        "auth_file":"/path/to/auth/file"
         "my_name":"BeeStingBot",
         "hangman":
         {
