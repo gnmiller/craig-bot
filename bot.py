@@ -255,12 +255,14 @@ async def on_message( msg ):
                 if len(args) != 1:
                     return
                 save_auth( serv_arr, auth_file )
+                cur_serv.last_msg = await client.send_message( msg.channel "Saving the authorization data to "+auth_file+".\n" )
                 return
         elif args[0] == "load_auth":
             if cur_serv.check_auth( msg.author ):
                 if len(args) != 1:
                     return
                 reload_auth( serv_arr, auth_file )
+                cur_serv.last_msg = await client.send_message( msg.channel "Reloading the authorization data from "+auth_file+".\n" )
                 return
         elif args[0] == "8ball":
             question = "```You asked: \n"
