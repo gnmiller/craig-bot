@@ -56,30 +56,30 @@ class player:
         if self.check_class( _class ) == 0:
             self.atk = 7.5
             self.mag = 2.5
-            self.max_hp = self.gen_hp( 2 )
+            self.max_hp = self.gen_hp( 3 )
         if self.check_class( _class ) == 1:
             self.atk = 5.0
             self.mag = 5.0
-            self.max_hp = self.gen_hp( 0 )
+            self.max_hp = self.gen_hp( 1 )
         if self.check_class( _class ) == 2:
             self.atk = 12.5
             self.mag = 2.5
-            self.max_hp = self.gen_hp( 1 )
+            self.max_hp = self.gen_hp( 2 )
         if self.check_class( _class ) == 3:
             self.atk = 10.0
             self.mag = 2.5
-            self.max_hp = self.gen_hp( 1 )
+            self.max_hp = self.gen_hp( 2 )
         if self.check_class( _class ) == 4:
             self.atk = 2.0
             self.mag = 10.0
-            self.max_hp = self.gen_hp( 0 )
+            self.max_hp = self.gen_hp( 1 )
         self.hp = self.max_hp
         return
     
     def gen_hp( self, d ):
         hp = 0
         for i in range( 0,3 ):
-            hp += dice[d]
+            hp += random.randint( 0, dice[d] )
         return hp*2
     
     def to_next( self ):

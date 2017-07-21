@@ -255,6 +255,7 @@ def help_string2( prefix ):
     ret_str += prefix+"stop (+)\n    Stops the bot.\n\n"
     ret_str += prefix+"restart (+)\n    Restarts the bot.\n\n"
     ret_str += prefix+"status (+)\n    Displays status of the bot (PID and start time).\n\n"
+    ret_str += prefix+"clear <n>(+)\n    Remove the last n messages the bot sent.\n\n"
     ret_str += "```"
     return ret_str
 
