@@ -145,10 +145,10 @@ class hangman:
         with open( "/usr/share/dict/words" ) as f:
             words = f.read().split("\n")
         # find a sort of long word
-        rand = random.randint( 0, len( words ) )
+        rand = random.randint( 0, len( words )-1 )
         t_word = words[ rand ]
         while len( t_word ) < 6 :
-            rand = random.randint( 0, len( words ) )
+            rand = random.randint( 0, len( words )-1 )
             t_word = words[ rand ]
         self.word = t_word.lower()
         import re
@@ -201,11 +201,11 @@ def magic_8ball():
     no = ["Don't count on it", "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
     r = random.randint( 0, 2 )
     if r == 0 :
-        return yes[ random.randint( 0, len( yes ) ) ]
+        return yes[ random.randint( 0, len( yes )-1 ) ]
     if r == 1 :
-        return maybe[ random.randint( 0, len( maybe ) ) ]
+        return maybe[ random.randint( 0, len( maybe )-1 ) ]
     if r == 2 :
-        return no[ random.randint( 0, len( no ) ) ]
+        return no[ random.randint( 0, len( no )-1 ) ]
     return "what"
 
 def save_auth( servers, auth_file ):
