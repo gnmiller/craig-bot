@@ -5,7 +5,7 @@ from dateutil import parser, relativedelta
 from math import floor
 import signal
 
-cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h","save_auth","load_auth","donger","slice","create","disp"]
+cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h","save_auth","load_auth","donger","slice","create","disp","clear"]
 dice = [4, 6, 8, 12]
 
 path = os.path.dirname(os.path.realpath(__file__))
@@ -44,7 +44,7 @@ class search:
     def search_clear( self ):
         """Reset the search object to a fresh state for the next search."""
         self.searched = False
-        self.searc_time = datetime.datetime.now()
+        self.search_time = datetime.datetime.now()
         self.search_msg = None
         self.results = {}
         self.mode = "none"

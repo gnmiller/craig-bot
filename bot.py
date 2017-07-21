@@ -2,7 +2,7 @@ import discord, asyncio, datetime, json, pytz, os, urllib3, random
 from subprocess import call
 from datetime import timedelta
 from craig_server import craig_server as __serv, craig_user as __user
-from craig_helper import get_got_time, magic_8ball, help_string1, help_string2, cmds, save_auth, reload_auth, dice, get_user, user_by_name
+from craig_helper import get_got_time, magic_8ball, help_string1, help_string2, cmds, save_auth, reload_auth, dice, get_user, user_by_name  
 from rpg import monsters, classes
 import random
 
