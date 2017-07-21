@@ -19,6 +19,7 @@ prefix = settings["bot"]["prefix"]
 max_time = settings["bot"]["timeout"]
 my_name = settings["bot"]["my_name"]
 auth_file = settings["bot"]["auth_file"]
+max_msg = settings["bot"]["stored_msg"]
 last_msg = None
 started = False
 date_format = "%m/%d/%y %I:%M %p"
@@ -85,8 +86,8 @@ async def on_message( msg ):
     if not started:
         return
     # did i send the message?
-    if msg.author.name.find( my_name ) >= 0:
-        return
+    #if msg.author == client.user >= 0:
+    #    return
     # special help message..
     if client.user.mentioned_in( msg ):
         await client.send_message( msg.channel, "Sorry! I don't respond to mentions. Use "+prefix+"help or "+prefix+"h to see what I can do.\n" )
@@ -96,6 +97,14 @@ async def on_message( msg ):
     for s in serv_arr:
         if s.me == msg.server: 
             cur_serv = s
+    # did i send the message?
+    if msg.author == client.user:
+        if len(cur_serv.msgs) < max_msg:
+            cur_serv.msgs.append(msg)
+        else:
+            old_msg = cur_serv.msgs.popleft()
+            cur_serv.msgs.append(msg)
+        return
     # timeout check
     if cur_serv.search_helper.timeout() == True:
         cur_serv.search_helper.clear_search()
@@ -244,6 +253,7 @@ async def on_message( msg ):
             if cur_serv.check_auth( msg.author ):
                 if len(args) == 1:
                     cur_serv.last_msg = await client.send_message( msg.channel, "You need to specify a name!\n" )
+                    return
                 if cur_serv.del_auth( args[1] ) == True:
                     cur_serv.last_msg = await client.send_message( msg.channel, "Removing "+args[1]+" from the authorized list.\n" )
                     return
@@ -251,6 +261,19 @@ async def on_message( msg ):
                 return
             else:
                 cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
+                return
+        elif args[0] == "clear":
+            if cur_serv.check_auth( msg.author ):
+                if len(args) == 1:
+                    cur_serv.last_msg = await client.send_message( msg.channel, "You need to provide an amount of messages.\n" )
+                    return
+                if int(args[1]) >= len(cur_serv.msgs):
+                    size = len(cur_srv.msgs)-1
+                else:
+                    size = int(args[1])
+                for i in range( 0, size ):
+                    removed = cur_serv.msgs.popleft()
+                    await client.delete_message( removed )
                 return
         elif args[0] == "save_auth":
             if cur_serv.check_auth( msg.author ):
