@@ -2,6 +2,7 @@ import discord, json, datetime, pytz, os
 from craig_helper import search, hangman, cmds
 from datetime import timedelta
 from rpg import player, monster
+from collections import deque
 
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
@@ -22,7 +23,8 @@ class craig_server:
         for c in cmds :
             self.last_used[ c ] = ( now + timedelta( minutes=-5 ) )
         self.load_auth( settings["bot"]["auth_file"] )
-                
+        self.msgs = []
+
     def load_auth( self, auth_file ):
         """Load auth data"""
         path = os.path.dirname(os.path.realpath(__file__))
