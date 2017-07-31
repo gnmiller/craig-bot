@@ -2,6 +2,7 @@ import datetime, json, urllib3, random, os, pytz
 from apiclient.discovery import build
 from datetime import date, timedelta
 from dateutil import parser, relativedelta
+from tzlocal import get_localzone
 from math import floor
 
 cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h","save_auth","load_auth","donger","slice"]
@@ -156,25 +157,27 @@ class hangman:
         
 def get_got_time():
     """Returns a formatted string with the time until the next and time from the previous GoT episode. Episode name is also returned in the string."""
-    cur = datetime.datetime.now()
+    now = datetime.datetime.now().astimezone( get_localzone() )
     uri = "http://api.tvmaze.com/shows/82?embed[]=nextepisode&embed[]=previousepisode"
     http = urllib3.PoolManager()
     response = http.request( 'GET', uri )
     data = json.loads( response.data.decode( 'utf-8' ) )
-    next_ep = parser.parse( data["_embedded"]["nextepisode"]["airstamp"] )
+    next_ep = parser.parse( data["_embedded"]["nextepisode"]["airstamp"] ).astimezone( get_localzone() )
     next_ep_name = data["_embedded"]["nextepisode"]["name"]
-    prev_ep = parser.parse( data["_embedded"]["previousepisode"]["airstamp"] )
+    prev_ep = parser.parse( data["_embedded"]["previousepisode"]["airstamp"] ).astimezone( get_localzone() )
     prev_ep_name = data["_embedded"]["previousepisode"]["name"]
-    cur = pytz.utc.localize( cur )
-    next_diff = relativedelta.relativedelta( next_ep, cur )
-    prev_diff = relativedelta.relativedelta( prev_ep, cur )
+    next_diff = relativedelta.relativedelta( next_ep, now )
+    prev_diff = relativedelta.relativedelta( prev_ep, now )
+    print( now.strftime( "%m/%d/%y %I:%M %p %Z" ) )
+    print( next_ep.strftime( "%m/%d/%y %I:%M %p %Z" ) )
+    print( prev_ep.strftime( "%m/%d/%y %I:%M %p %Z" ) )
     ret_str = "```smalltalk\nLast Episode: "+prev_ep_name+" aired "
     if (abs(prev_diff.months) > 0):
         ret_str+=str(abs(prev_diff.months))+" months "
     if (abs(prev_diff.days) > 0):
         ret_str+=str(abs(prev_diff.days))+" days "
     if (abs(prev_diff.hours) > 0):
-        ret_str+=str(abs(prev_diff.hours-4))+" hours "
+        ret_str+=str(abs(prev_diff.hours))+" hours "
     if (abs(prev_diff.minutes) > 0):
         ret_str+=str(abs(prev_diff.minutes))+" minutes and "
     if (abs(prev_diff.seconds) > 0):
@@ -185,7 +188,7 @@ def get_got_time():
     if next_diff.days > 0 :
         ret_str+=str(next_diff.days)+" days "
     if next_diff.hours > 0 :
-        ret_str+=str(next_diff.hours-4)+" hours "
+        ret_str+=str(next_diff.hours)+" hours "
     if next_diff.minutes > 0 :
         ret_str+=str(next_diff.minutes)+" minutes and "
     if next_diff.seconds > 0 :
