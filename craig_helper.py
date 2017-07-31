@@ -168,9 +168,6 @@ def get_got_time():
     prev_ep_name = data["_embedded"]["previousepisode"]["name"]
     next_diff = relativedelta.relativedelta( next_ep, now )
     prev_diff = relativedelta.relativedelta( prev_ep, now )
-    print( now.strftime( "%m/%d/%y %I:%M %p %Z" ) )
-    print( next_ep.strftime( "%m/%d/%y %I:%M %p %Z" ) )
-    print( prev_ep.strftime( "%m/%d/%y %I:%M %p %Z" ) )
     ret_str = "```smalltalk\nLast Episode: "+prev_ep_name+" aired "
     if (abs(prev_diff.months) > 0):
         ret_str+=str(abs(prev_diff.months))+" months "
