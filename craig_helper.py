@@ -174,7 +174,7 @@ def get_got_time():
     if (abs(prev_diff.days) > 0):
         ret_str+=str(abs(prev_diff.days))+" days "
     if (abs(prev_diff.hours) > 0):
-        ret_str+=str(abs(prev_diff.hours))+" hours "
+        ret_str+=str(abs(prev_diff.hours-4))+" hours "
     if (abs(prev_diff.minutes) > 0):
         ret_str+=str(abs(prev_diff.minutes))+" minutes and "
     if (abs(prev_diff.seconds) > 0):
@@ -185,7 +185,7 @@ def get_got_time():
     if next_diff.days > 0 :
         ret_str+=str(next_diff.days)+" days "
     if next_diff.hours > 0 :
-        ret_str+=str(next_diff.hours)+" hours "
+        ret_str+=str(next_diff.hours-4)+" hours "
     if next_diff.minutes > 0 :
         ret_str+=str(next_diff.minutes)+" minutes and "
     if next_diff.seconds > 0 :
