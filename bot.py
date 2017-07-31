@@ -3,7 +3,6 @@ from subprocess import call
 from datetime import timedelta
 from craig_server import craig_server as __serv, craig_user as __user
 from craig_helper import get_got_time, magic_8ball, help_string1, help_string2, cmds, save_auth, reload_auth, dice, get_user, user_by_name  
-from rpg import monsters, classes
 import random
 
 # load settings file
@@ -111,9 +110,9 @@ async def on_message( msg ):
         await client.send_message( msg.channel, "Timeout!" )
     not_auth = "You are not authorized to send this command."
     now = pytz.utc.localize( datetime.datetime.now() )
-    # valid cmd
-    msg_prefix = msg.content[:len(prefix)]
-    args = msg.content[len(prefix):].split()
+    msg_prefix = msg.content[:len(prefix)] #slice prefix off
+    args = msg.content[len(prefix):].split() #split into args
+    #didst thou beckon me?
     if not cur_serv.busy and not cur_serv.search_helper.searched:
         if prefix in msg_prefix:
             if args[0] not in cmds:
@@ -359,38 +358,6 @@ async def on_message( msg ):
             else:
                 cur_serv.last_msg = await client.send_message( msg.channel, not_auth )
                 return
-        elif args[0] == "create":
-            if len(args) == 1:
-                cur_serv.last_msg = await client.send_message( msg.channel, "Invalid format.\n" )
-                return
-            if args[1] in classes:
-                cur_user = get_user( cur_serv, msg.author )
-                if cur_user == None:
-                    return
-                cur_serv.last_msg = await client.send_message( msg.channel, cur_serv.create_char( cur_user, args[1] ) )
-                return
-            else:
-                cur_serv.last_msg = await client.send_message( msg.channel, "Invalid class.\n")
-                return
-            return
-        elif args[0] == "disp":
-            if len(args) == 1:
-                cur_user = get_user( cur_serv, msg.author )
-            if len(args) == 2:
-                cur_user = user_by_name( cur_serv, args[1].lower() )
-            if not cur_user.char == None:
-                ret_str = "```Stats for "+msg.author.name+"'s character: \n"
-                ret_str += "Class: "+cur_user.char._class+"\n"
-                ret_str += "Level: "+str(cur_user.char.lvl)+" To Next: "+str(cur_user.char.to_next())+"\n"
-                ret_str += "HP: "+str(cur_user.char.hp)+"/"+str(cur_user.char.max_hp)+"\n"
-                ret_str += "ATK: "+str(cur_user.char.atk)+"\n"
-                ret_str += "MAG: "+str(cur_user.char.mag)+"\n```"
-                cur_serv.last_msg = await client.send_message( msg.channel, ret_str )
-                return
-            else:
-                cur_serv.last_msg = await client.send_message( msg.channel, "You don't have a character yet!\n" )
-                return
-            cur_serv.last_msg = await client.send_message( msg.channel, "Invalid format.\n" )
         else:
             return
     

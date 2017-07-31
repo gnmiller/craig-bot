@@ -3,9 +3,8 @@ from apiclient.discovery import build
 from datetime import date, timedelta
 from dateutil import parser, relativedelta
 from math import floor
-import signal
 
-cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h","save_auth","load_auth","donger","slice","create","disp","clear"]
+cmds = ["qr","yt","tmdb","got","hangman","8ball","auth","deauth","gamequit","status","restart","stop","help","h","save_auth","load_auth","donger","slice"]
 dice = [4, 6, 8, 12]
 
 path = os.path.dirname(os.path.realpath(__file__))
@@ -262,7 +261,7 @@ def help_string2( prefix ):
 def get_user( server, user ):
     """discord.user -> craig_user"""
     for u in server.users:
-        if u.me.name.lower() == user.name.lower():
+        if u.me.id == user.id:
             return u
     return None
 
@@ -272,3 +271,4 @@ def user_by_name( server, name ):
         if u.me.name.lower() == name.lower():
             return u
     return None
+
