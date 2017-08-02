@@ -100,7 +100,7 @@ async def on_message( msg ):
             for i in range( 1, len( args ) ):
                 game_str += args[i]
             await client.change_presence( game=discord.Game( name=game_str ) )
-            await client.send_message( "Setting now playing to: {}\n".format( game_str ) )
+            await client.send_message( msg.channel, "Setting now playing to: {}\n".format( game_str ) )
             return
         return
     elif cur_serv.busy == True:
