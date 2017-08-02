@@ -24,7 +24,7 @@ class bs_user:
         self.last = datetime.datetime.now().astimezone( glz() )
     
 class bs_server:
-    def __init__( self, client, server, max_time ):
+    def __init__( self, client, server, max_time, max_msg ):
         self.mode = None
         self.busy = False
         self.me = server
@@ -35,8 +35,10 @@ class bs_server:
         self.helper = None
         self.server = server
         self.timer = None
+        self.msg_lim = max_msg
         self.max_time = max_time
         self.users = {}
+        self.game = None
         for m in server.members:
             self.users[int(m.id)] = bs_user( m )
         self.load_auth( "./auth.json" )
@@ -48,9 +50,9 @@ class bs_server:
         self.auth = {}
         if self.me.id in auth_data:
             for e in auth_data[self.me.id]:
-                self.auth[int(e)] = int(auth_data[self.me.id][e])
+                self.auth[e] = auth_data[self.me.id][e]
         return
-    
+        
     def get_auth( self, user ):
         if int(user.id) in self.auth:
             return self.auth[int(user.id)]
@@ -58,13 +60,13 @@ class bs_server:
             return None
     
     def queue_msg( self, msg ):
-        if len( self.msg_q ) >= 100:
+        if len( self.msg_q ) >= self.msg_lim:
             self.msg_q.popleft()
         self.msg_q.append( msg )
         return
     
     def queue_cmd( self, msg ):
-        if len( self.cmd_q ) >= 100:
+        if len( self.cmd_q ) >= self.msg_lim:
             self.cmd_q.popleft()
         self.cmd_q.append( msg )
         return
@@ -73,17 +75,14 @@ class bs_server:
         self.mode = None
         self.busy = False
         self.helper = None
+        self.game = None
         if not self.timer == None:
             await self.timer.cancel()
             self.timer = None
         return
     
     async def timeout( self ):
-        self.mode = None
-        self.busy = False
-        self.helper = None
-        await self.timer.cancel()
-        self.timer = None
+        self.reset()
         last_msg = await self.client.send_message( self.cmd_q[-1].channel, "Timeout!\n" )
         return
 
@@ -99,7 +98,6 @@ class bs_server:
                 msg_str += str(i)+". "+self.helper.results[i].name+"\n"
             msg_str += "```\n"
             last_msg = await self.client.send_message( self.cmd_q[-1].channel, msg_str )
-            self.queue_msg( last_msg )
             return
         else:
             return
@@ -109,10 +107,10 @@ class bs_server:
             return
         if self.helper.mode == "yt":
             msg_str = "Selected video: {}\nTitle: {}\nhttps://www.youtube.com/watch?v={}\n".format( str(res), self.helper.results[res].name, self.helper.results[res].id )
-            last_msg = await self.client.edit_message( self.msg_q[-1], msg_str )
+            await self.client.edit_message( self.msg_q[-1], msg_str )
             await self.reset()
         elif self.helper.mode == "tmdb":
             msg_str = "Selected film: {}\nName: {}\nhttps://www.themoviedb.org/movie/{}".format( str(res), self.helper.results[res].name, self.helper.results[res].id )
-            last_msg = await self.client.edit_message( self.msg_q[-1], msg_str )
+            await self.client.edit_message( self.msg_q[-1], msg_str )
             await self.reset()
-        return
+        return          
