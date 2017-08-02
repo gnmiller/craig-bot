@@ -40,10 +40,9 @@ async def on_server_join( server ):
 async def on_member_update( before, after ):
     for s in servers:
         for u in s.users:
-            pdb.set_trace()
             if u == after.id:
-                s[u].state = after.status
-                s[u].last = datetime.datetime.now().astimezone( glz() )
+                s.users[u].state = after.status
+                s.users[u].last = datetime.datetime.now().astimezone( glz() )
     return
             
 @client.event
