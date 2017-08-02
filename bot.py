@@ -81,7 +81,7 @@ async def on_message( msg ):
                 await client.send_message( msg.channel, "You need to ask a question!\n" )
                 return
             temp = magic_8ball()
-            p_str = "```smalltalk\nYou asked: {}\nThe Magic 8-Ball says: {}```\n".format( msg.content[6:], temp )
+            p_str = "```smalltalk\nYou asked: {}\nThe Magic 8-Ball says: {}```\n".format( msg.content[7:], temp )
             await client.send_message( msg.channel, p_str )
             return
         if args[0] == "status":
