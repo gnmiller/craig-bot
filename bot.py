@@ -81,7 +81,7 @@ async def on_message( msg ):
                 await client.send_message( msg.channel, "You need to ask a question!\n" )
                 return
             temp = magic_8ball()
-            p_str = "```You asked: {}\nThe Magic 8-Ball says: {}\n".format( msg.content[:6], temp )
+            p_str = "```smalltalk\nYou asked: {}\nThe Magic 8-Ball says: {}```\n".format( msg.content[:6], temp )
             await client.send_message( msg.channel, p_str )
             return
         if args[0] == "status":
@@ -132,7 +132,7 @@ def query_string( content ):
     return query
 
 async def whoami( serv, msg ):
-    msg_str = "```Username: {}\nID: {}\nAuth Level: {}\n```".format( msg.author.name, msg.author.id, serv.get_auth( msg.author ) )
+    msg_str = "```smalltalk\nUsername: {}\nID: {}\nAuth Level: {}\n```".format( msg.author.name, msg.author.id, serv.get_auth( msg.author ) )
     serv.queue_cmd( msg )
     return await client.send_message( msg.channel, msg_str )
 

@@ -93,7 +93,7 @@ class bs_server:
             self.helper.do_search()
             self.busy = True
             self.mode = "search"
-            msg_str = "```Please select a video:\n"
+            msg_str = "```smalltalk\nPlease select a video:\n"
             for i in range( 1, len(self.helper.results)+1 ):
                 msg_str += str(i)+". "+self.helper.results[i].name+"\n"
             msg_str += "```\n"

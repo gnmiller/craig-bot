@@ -57,7 +57,7 @@ def magic_8ball():
     return "what"
 
 def help_str( p ):
-    ret_str = "```\n{}help/{}h - Display this dialogue.\n    Parameters are given as [optional] and <required>\n\n".format( p, p )
+    ret_str = "```smalltalk\n{}help/{}h - Display this dialogue.\n    Parameters are given as [optional] and <required>\n\n".format( p, p )
     ret_str += "{}status - Display the bot's PID and when it was started.\n\n".format( p )
     ret_str += "{}set_game <message> - Set the bot's \"Now playing\" message.\n\n".format( p )
     ret_str += "{}whoami - Display's the sender's username, Discord ID and current auth level.\n\n".format( p )
