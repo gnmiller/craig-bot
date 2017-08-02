@@ -67,7 +67,7 @@ async def on_message( msg ):
                 await client.send_message( msg.channel, creat_str )
                 return
             else:
-                await client.send_message( msg.channel, "You are not authorized for this command. Required: 3 ({})\n".format( str( al ) )
+                await client.send_message( msg.channel, "You are not authorized for this command. Required: 3 ({})\n".format( str( al ) ) )
                 return
         return
     elif cur_serv.busy == True:
