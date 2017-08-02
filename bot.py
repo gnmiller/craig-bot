@@ -76,7 +76,7 @@ async def on_message( msg ):
             await client.send_message( msg.chanel, p_str )
             return
         if args[0] == "status":
-            al = cur_serv.get_auth( msg.content.author )
+            al = cur_serv.get_auth( msg.author )
             if al > 3:
                 my_pid = os.getpid()
                 created = os.path.getmtime( "/proc/"+str(my_pid) )
@@ -89,7 +89,7 @@ async def on_message( msg ):
                 await client.send_message( msg.channel, "You are not authorized for this command. Required: 3 ({})\n".format( str( al ) ) )
                 return
         if args[0] == "set_game":
-            al = cur_serv.get_auth( msg.content.author )
+            al = cur_serv.get_auth( msg.author )
             if al < 1:
                 await client.send_message( msg.channel, "You are not authorized.\n" )
                 return
