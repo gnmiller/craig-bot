@@ -40,7 +40,7 @@ class bs_server:
         self.users = {}
         self.game = None
         for m in server.members:
-            self.users[int(m.id)] = bs_user( m )
+            self.users[m.id] = bs_user( m )
         self.load_auth( "./authorized.json" )
     
     def load_auth( self, auth_file ):
