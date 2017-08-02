@@ -50,6 +50,9 @@ async def on_message( msg ):
     for s in servers:
         if s.server == msg.server:
             cur_serv = s
+    #ignore PMs/etc
+    if cur_serv == None:
+        return
     if msg.author == client.user:
         cur_serv.queue_msg( msg )
     now = pytz.utc.localize( datetime.datetime.now() )
