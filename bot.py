@@ -1,6 +1,7 @@
 #!/usr/bin/python3.6
 
-import discord, asyncio, pytz, datetime, os, json, funcs
+import discord, asyncio, pytz, datetime, os, json
+from funcs import get_got_time, magic_8ball
 from tzlocal import get_localzone as glz
 from server import bs_server
 import pdb
