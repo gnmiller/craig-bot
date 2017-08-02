@@ -82,8 +82,8 @@ class bs_server:
         return
     
     async def timeout( self ):
-        self.reset()
-        last_msg = await self.client.send_message( self.cmd_q[-1].channel, "Timeout!\n" )
+        await self.reset()
+        await self.client.send_message( self.cmd_q[-1].channel, "Timeout!\n" )
         return
 
     async def search( self, term, mode, apikey ):

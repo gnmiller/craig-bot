@@ -88,6 +88,20 @@ async def on_message( msg ):
             else:
                 await client.send_message( msg.channel, "You are not authorized for this command. Required: 3 ({})\n".format( str( al ) ) )
                 return
+        if args[0] == "set_game":
+            al = cur_serv.get_auth( msg.content.author )
+            if al < 1:
+                await client.send_message( msg.channel, "You are not authorized.\n" )
+                return
+            if len( args ) < 2:
+                await client.send_message( msg.channel, "You need to specify a message for the game!\n" )
+                return
+            game_str = ""
+            for i in range( 1, len( args ) ):
+                game_str += args[i]
+            await client.change_presence( game=discord.Game( name=game_str ) )
+            await client.send_message( "Setting now playing to: {}\n".format( game_str ) )
+            return
         return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
