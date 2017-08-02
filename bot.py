@@ -51,6 +51,11 @@ async def on_message( msg ):
             temp = get_got_time()
             await client.send_message( msg.channel, temp )
             return
+        if args[0] == "8ball":
+            temp = magic_8ball()
+            p_str = "```You asked: {}\nThe Magic 8-Ball says: {}\n".format( msg.content, temp )
+            await client.send_message( msg.chanel, p_str )
+            return
         return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
