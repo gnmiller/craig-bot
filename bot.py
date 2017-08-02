@@ -108,7 +108,7 @@ async def on_message( msg ):
             game_str = ""
             for i in range( 1, len( args ) ):
                 game_str += args[i]+" "
-            game_str = game_str[len(game_str)-1:]
+            game_str = game_str[:len(game_str)-1]
             await client.change_presence( game=discord.Game( name=game_str ) )
             await client.send_message( msg.channel, "Setting now playing to: {}\n".format( game_str ) )
             return
