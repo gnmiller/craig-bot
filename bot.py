@@ -59,7 +59,7 @@ async def on_message( msg ):
         args[0] = args[0].lower()
         cur_serv.queue_cmd( msg )
         if args[0] == "help" or args[0] == "h":
-            await( client.send_message( msg.channel, help_string() ))
+            await( client.send_message( msg.author, help_str() ))
         if args[0] == "yt":
             temp = await cur_serv.search( query_string( args ), "yt", youtube_key )
             return
