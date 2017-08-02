@@ -82,7 +82,7 @@ async def on_message( msg ):
                 return
             temp = magic_8ball()
             p_str = "```You asked: {}\nThe Magic 8-Ball says: {}\n".format( msg.content[:6], temp )
-            await client.send_message( msg.chanel, p_str )
+            await client.send_message( msg.channel, p_str )
             return
         if args[0] == "status":
             al = cur_serv.get_auth( msg.author )

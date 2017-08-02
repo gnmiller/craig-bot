@@ -57,13 +57,13 @@ def magic_8ball():
     return "what"
 
 def help_str( p ):
-    ret_str = "```\n{}help/{}h - Display this dialogue.\n    Parameters are given as [optional] and <required>\n".format( p, p )
-    ret_str += "{}status - Display the bot's PID and when it was started.".format( p )
-    ret_str += "{}set_game <message> - Set the bot's \"Now playing\" message.".format( p )
-    ret_str += "{}whoami - Display's the sender's username, Discord ID and current auth level.\n".format( p )
-    ret_str += "{}got - Display when the last GoT episode aired and when the next will air (in terms of days, hours, minutes and seconds).\n".format( p )
-    ret_str += "{}yt <search query> - Search YouTube for a video.\n".format( p )
-    ret_str += "{}tmdb <search query> - Search TMDb for a film. Currently television show search is not implemented.\n".format( p )
-    ret_str += "{}8ball <question> - Ask the magic 8-Ball a question and find out your fate!\n".format( p )
+    ret_str = "```\n{}help/{}h - Display this dialogue.\n    Parameters are given as [optional] and <required>\n\n".format( p, p )
+    ret_str += "{}status - Display the bot's PID and when it was started.\n\n".format( p )
+    ret_str += "{}set_game <message> - Set the bot's \"Now playing\" message.\n\n".format( p )
+    ret_str += "{}whoami - Display's the sender's username, Discord ID and current auth level.\n\n".format( p )
+    ret_str += "{}got - Display when the last GoT episode aired and when the next will air (in terms of days, hours, minutes and seconds).\n\n".format( p )
+    ret_str += "{}yt <search query> - Search YouTube for a video.\n\n".format( p )
+    ret_str += "{}tmdb <search query> - Search TMDb for a film. Currently television show search is not implemented.\n\n".format( p )
+    ret_str += "{}8ball <question> - Ask the magic 8-Ball a question and find out your fate!\n\n".format( p )
     ret_str += "```"
     return ret_str
