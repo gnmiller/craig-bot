@@ -55,7 +55,7 @@ class bs_server:
         
     def get_auth( self, user ):
         if user.id in self.auth:
-            return self.auth[user.id]
+            return int(self.auth[user.id])
         else:
             return None
     
