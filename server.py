@@ -41,7 +41,7 @@ class bs_server:
         self.game = None
         for m in server.members:
             self.users[int(m.id)] = bs_user( m )
-        self.load_auth( "./auth.json" )
+        self.load_auth( "./authorized.json" )
     
     def load_auth( self, auth_file ):
         path = os.path.dirname( os.path.realpath( __file__ ) )
