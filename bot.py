@@ -1,7 +1,7 @@
 #!/usr/bin/python3.6
 
 import discord, asyncio, pytz, datetime, os, json
-from funcs import get_got_time, magic_8ball
+from funcs import get_got_time, magic_8ball, help_string
 from tzlocal import get_localzone as glz
 from server import bs_server
 import pdb
@@ -18,7 +18,6 @@ prefix = settings["bot"]["prefix"]
 timeout_val = settings["bot"]["timeout"]
 max_msg = settings["bot"]["stored_msg"]
 date_str = "%m/%d/%y %I:%M %p"
-
 
 servers = []
 @client.event
@@ -57,7 +56,10 @@ async def on_message( msg ):
     p = msg.content[:len(prefix)]
     args = msg.content[len(prefix):].split()
     if p == prefix:
+        args[0] = args[0].lower()
         cur_serv.queue_cmd( msg )
+        if args[0] == "help" or args[0] == "h":
+            await( client.send_message( msg.channel, help_string() ))
         if args[0] == "yt":
             temp = await cur_serv.search( query_string( args ), "yt", youtube_key )
             return
@@ -72,8 +74,11 @@ async def on_message( msg ):
             await client.send_message( msg.channel, temp )
             return
         if args[0] == "8ball":
+            if len( args ) < 2:
+                await client.send_message( msg.channel, "You need to ask a question!\n" )
+                return
             temp = magic_8ball()
-            p_str = "```You asked: {}\nThe Magic 8-Ball says: {}\n".format( msg.content, temp )
+            p_str = "```You asked: {}\nThe Magic 8-Ball says: {}\n".format( msg.content[:6], temp )
             await client.send_message( msg.chanel, p_str )
             return
         if args[0] == "status":
