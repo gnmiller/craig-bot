@@ -56,6 +56,19 @@ async def on_message( msg ):
             p_str = "```You asked: {}\nThe Magic 8-Ball says: {}\n".format( msg.content, temp )
             await client.send_message( msg.chanel, p_str )
             return
+        if args[0] == "status":
+            al = cur_serv.get_auth( msg.content.author )
+            if al > 3:
+                my_pid = os.getpid()
+                created = os.path.getmtime( "/proc/"+str(my_pid) )
+                creat_str = "```smalltalk\nBot running with PID "+str(my_pid)+" since "
+                creat_str += datetime.datetime.fromtimestamp( int(created) ).strftime( date_format )
+                creat_str += "```\n"
+                await client.send_message( msg.channel, creat_str )
+                return
+            else:
+                await client.send_message( msg.channel, "You are not authorized for this command. Required: 3 ({})\n".format( str( al ) )
+                return
         return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
