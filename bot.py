@@ -81,7 +81,7 @@ async def on_message( msg ):
                 my_pid = os.getpid()
                 created = os.path.getmtime( "/proc/"+str(my_pid) )
                 creat_str = "```smalltalk\nBot running with PID "+str(my_pid)+" since "
-                creat_str += datetime.datetime.fromtimestamp( int(created) ).strftime( date_format )
+                creat_str += datetime.datetime.fromtimestamp( int(created) ).strftime( date_str )
                 creat_str += "```\n"
                 await client.send_message( msg.channel, creat_str )
                 return
