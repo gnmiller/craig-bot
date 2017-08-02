@@ -1,6 +1,7 @@
 #!/usr/bin/python3.6
 
 import discord, asyncio, pytz, datetime, os, json, funcs
+from tzlocal import get_localzone as glz
 from server import bs_server
 import pdb
 
@@ -14,6 +15,7 @@ youtube_key = settings["youtube"]["token"]
 tmdb_key = settings["tmdb"]["token"]
 prefix = settings["bot"]["prefix"]
 timeout_val = settings["bot"]["timeout"]
+max_msg = settings["bot"]["stored_msg"]
 date_str = "%m/%d/%y %I:%M %p"
 
 
@@ -21,10 +23,27 @@ servers = []
 @client.event
 async def on_ready():
     for s in client.servers:
-        servers.append( bs_server( client, s, timeout_val ) )
+        servers.append( bs_server( client, s, timeout_val, max_msg ) )
     await client.change_presence( game=discord.Game( name="indev build" ) )
     print( "startup finished\n" )
     
+@client.event
+async def on_server_join( server ):
+    for s in servers:
+        if s == server:
+            return
+    servers.append( bs_server( client, server, timeout_val, max_msg ) )
+    return
+
+@client.event
+async def on_member_update( before, after ):
+    for s in servers:
+        for u in s.users:
+            if u.user.id == after.id:
+                u.state = after.status
+                u.last = datetime.datetime.now().astimezone( glz() )
+    return
+            
 @client.event
 async def on_message( msg ):
     cur_serv = None
