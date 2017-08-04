@@ -1,8 +1,7 @@
 #!/usr/bin/python3.6
 
 import discord, asyncio, pytz, datetime, os, json
-from funcs import get_got_time, magic_8ball, help_str
-from tzlocal import get_localzone as glz
+from funcs import get_got_time, magic_8ball, help_str, write_auth, bs_now as bnow
 from server import bs_server
 import pdb
 
@@ -18,6 +17,7 @@ prefix = settings["bot"]["prefix"]
 timeout_val = settings["bot"]["timeout"]
 max_msg = settings["bot"]["stored_msg"]
 date_str = "%m/%d/%y %I:%M %p"
+f.close()
 
 servers = []
 @client.event
@@ -41,7 +41,7 @@ async def on_member_update( before, after ):
         for u in s.users:
             if u == after.id:
                 s.users[u].state = after.status
-                s.users[u].last = datetime.datetime.now().astimezone( glz() )
+                s.users[u].last = bnow()
     return
             
 @client.event
@@ -55,7 +55,7 @@ async def on_message( msg ):
         return
     if msg.author == client.user:
         cur_serv.queue_msg( msg )
-    now = pytz.utc.localize( datetime.datetime.now() )
+    now = bnow()
     p = msg.content[:len(prefix)]
     args = msg.content[len(prefix):].split()
     if p == prefix:
@@ -63,6 +63,7 @@ async def on_message( msg ):
         cur_serv.queue_cmd( msg )
         if args[0] == "help" or args[0] == "h":
             await( client.send_message( msg.author, help_str( prefix ) ))
+            return
         if args[0] == "yt":
             temp = await cur_serv.search( query_string( args ), "yt", youtube_key )
             return
@@ -111,6 +112,50 @@ async def on_message( msg ):
             game_str = game_str[:len(game_str)-1]
             await client.change_presence( game=discord.Game( name=game_str ) )
             await client.send_message( msg.channel, "Setting now playing to: {}\n".format( game_str ) )
+            return
+        if args[0] == "save":
+            al = cur_serv.get_auth( msg.author )
+            if not al == 5:
+                await client.send_message( msg.channel, "You are not authorized.\n" )
+                return
+            if len( args ) == 1:
+                file = "./authorized.json"
+            else:
+                # try to avoid naughty people
+                file = "./"+(args[1].split("/")[0])
+            write_auth( servers, file )
+            await client.send_message( msg.channel, "```Writing out the current authentication data to the file: "+file+"```" )
+            return
+        if args[0] == "add":
+            al = cur_serv.get_auth( msg.author )
+            if len( args ) <= 2:
+                await client.send_message( msg.channel, "```Usage: {}add <@user> <level>```".format( prefix ) )
+                return
+            if al < int(args[2]):
+                await client.send_message( msg.channel, "```You cannot add a user with higher auth level than yourself!```" )
+                return
+            uid = args[1][3:-1]
+            for u in cur_serv.users:
+                if cur_serv.users[u].user.id == uid:
+                    cur_serv.add_auth( u.me, level )
+                    await client.send_message( msg.channel, "```Adding {} to the current server's auth list at level {}.\n```".format( args[1], args[2] ) )
+                    return
+            await client.send_message( msg.channel, "```Failed to add {} to the current server's auth list.".format( args[1] ))
+            return
+            print( "asdf" )
+        if args[0] == "eval":
+            func = ""
+            ops = [ '+', '-', '/', '*', '%' ]
+            pdb.set_trace()
+            for i in range( 1, len(args) ):
+                for c in args[i]:
+                    if c in ops or c.isdigit():
+                        func += c
+                    else:
+                        await client.send_message( msg.channel, "This is only a basic calculator!\n" )
+                        return
+            ret = eval( func )
+            await client.send_message( msg.channel, "```Evaluated: {}\nResult: {}\n```".format( func, ret ) )
             return
         return
     elif cur_serv.busy == True:

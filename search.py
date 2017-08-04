@@ -6,6 +6,7 @@ class result:
     def __init__( self, name, id ):
         self.name = name
         self.id = id
+        self.year = None
 
 class bs_search:
     def __init__( self, term, mode, apikey ):
@@ -37,6 +38,7 @@ class bs_search:
         for res in data.get( "results", [] ):
             count += 1
             self.results[count] = result( res["title"], res["id"] )
+            self.results[count].year = res["release_date"][:4]
             if count >= 10:
                 break
         return self.results

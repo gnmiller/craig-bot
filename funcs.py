@@ -1,12 +1,14 @@
 import datetime, urllib3, random, json
 from datetime import date, timedelta
 from dateutil import parser, relativedelta
-from tzlocal import get_localzone
+from tzlocal import get_localzone as glz
 
+def bs_now():
+    return datetime.datetime.now().astimezone( glz() )
 
 def get_got_time():
     """Returns a formatted string with the time until the next and time from the previous GoT episode. Episode name is also returned in the string."""
-    now = datetime.datetime.now().astimezone( get_localzone() )
+    now = bs_now()
     uri = "http://api.tvmaze.com/shows/82?embed[]=nextepisode&embed[]=previousepisode"
     http = urllib3.PoolManager()
     response = http.request( 'GET', uri )
@@ -67,3 +69,12 @@ def help_str( p ):
     ret_str += "{}8ball <question> - Ask the magic 8-Ball a question and find out your fate!\n\n".format( p )
     ret_str += "```"
     return ret_str
+
+def write_auth( servers, auth_file ):
+    auth_data = {}
+    for s in servers:
+        auth_data[ s.me.id ] = s.auth
+    with open( auth_file, 'w' ) as f:
+        json.dump( auth_data, f, ensure_ascii=False )
+    f.close()
+    return

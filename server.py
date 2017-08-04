@@ -1,6 +1,7 @@
 import discord, asyncio, collections, datetime, os, json
 from search import bs_search
 from tzlocal import get_localzone as glz
+from funcs import bs_now as bnow
 
 class bs_timer:
     def __init__( self, timeout, callback ):
@@ -21,7 +22,7 @@ class bs_user:
     def __init__( self, user ):
         self.user = user
         self.state = user.status
-        self.last = datetime.datetime.now().astimezone( glz() )
+        self.last = bnow()
     
 class bs_server:
     def __init__( self, client, server, max_time, max_msg ):
@@ -47,11 +48,22 @@ class bs_server:
         path = os.path.dirname( os.path.realpath( __file__ ) )
         with open( auth_file, 'r' ) as f:
             auth_data = json.load( f )
+        f.close()
         self.auth = {}
         if self.me.id in auth_data:
             for e in auth_data[self.me.id]:
                 self.auth[e] = auth_data[self.me.id][e]
         return
+    
+    def add_auth( self, user, level ):
+        """return 0 if not in, else old level"""
+        if self.auth[user.id] == None:
+            self.auth[user.id] = level
+            return 0
+        else:
+            old = int(self.auth[user.id])
+            self.auth[user.id] = level
+            return old
         
     def get_auth( self, user ):
         if user.id in self.auth:
@@ -93,12 +105,24 @@ class bs_server:
             self.helper.do_search()
             self.busy = True
             self.mode = "search"
-            msg_str = "```smalltalk\nPlease select a video:\n"
-            for i in range( 1, len(self.helper.results)+1 ):
-                msg_str += str(i)+". "+self.helper.results[i].name+"\n"
-            msg_str += "```\n"
-            last_msg = await self.client.send_message( self.cmd_q[-1].channel, msg_str )
-            return
+            if len( self.helper.results ) <= 0:
+                await self.client.send_message( self.cmd_q[-1].channel, "Didn't get any results!\n" )
+                await self.reset()
+                return
+            if self.helper.mode == "yt":
+                msg_str = "```smalltalk\nPlease select a video:\n"
+                for i in range( 1, len(self.helper.results)+1 ):
+                    msg_str += str(i)+". "+self.helper.results[i].name+"\n"
+                msg_str += "```\n"
+                last_msg = await self.client.send_message( self.cmd_q[-1].channel, msg_str )
+                return
+            if self.helper.mode == "tmdb":
+                msg_str = "```smalltalk\nPlease select a video:\n"
+                for i in range( 1, len(self.helper.results)+1 ):
+                    msg_str += str(i)+". "+self.helper.results[i].name+" ("+self.helper.results[i].year+")\n"
+                msg_str += "```\n"
+                await self.client.send_message( self.cmd_q[-1].channel, msg_str )
+                return
         else:
             return
         
