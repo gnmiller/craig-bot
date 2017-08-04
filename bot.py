@@ -146,7 +146,6 @@ async def on_message( msg ):
         if args[0] == "eval":
             func = ""
             ops = [ '+', '-', '/', '*', '%' ]
-            pdb.set_trace()
             for i in range( 1, len(args) ):
                 for c in args[i]:
                     if c in ops or c.isdigit():
