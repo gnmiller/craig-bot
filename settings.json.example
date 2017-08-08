@@ -15,12 +15,8 @@
     {
         "prefix":"!",
         "timeout":"TIMEOUT TIME",
-        "auth_file":"/path/to/auth/file"
+        "auth_file":"/path/to/auth/file",
         "my_name":"BeeStingBot",
-        "hangman":
         "stored_msg":100
-        {
-            "max_guess":int
-        }
     }
 }
