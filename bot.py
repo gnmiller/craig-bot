@@ -1,7 +1,8 @@
 #!/usr/bin/python3.6
 
 import discord, asyncio, pytz, datetime, os, json
-from funcs import get_got_time, magic_8ball, help_str, write_auth, bs_now as bnow
+from discord.utils import find
+from funcs import get_got_time, magic_8ball, help_str, write_auth, find_user, bs_now as bnow
 from server import bs_server
 import pdb
 
@@ -129,20 +130,46 @@ async def on_message( msg ):
         if args[0] == "add":
             al = cur_serv.get_auth( msg.author )
             if len( args ) <= 2:
-                await client.send_message( msg.channel, "```Usage: {}add <@user> <level>```".format( prefix ) )
+                await client.send_message( msg.channel, "```Usage: {}add <user> <level> -- User may be a mention, name or ID```".format( prefix ) )
                 return
-            if al < int(args[2]):
+            if not al == 5 or al < int(args[2]): #level 5 can add any otherwise <=
                 await client.send_message( msg.channel, "```You cannot add a user with higher auth level than yourself!```" )
                 return
-            uid = args[1][3:-1]
+            user = find_user( args[1], cur_serv.me.members )
+            if user == None:
+                await client.send_message( msg.channel, "```Couldn't find user by the name of: {}```".format( args[1] ) )
+                return
             for u in cur_serv.users:
-                if cur_serv.users[u].user.id == uid:
-                    cur_serv.add_auth( u.me, level )
-                    await client.send_message( msg.channel, "```Adding {} to the current server's auth list at level {}.\n```".format( args[1], args[2] ) )
+                if cur_serv.users[u].user.id == user.id:
+                    cur_serv.add_auth( cur_serv.users[u].user, args[2] )
+                    await client.send_message( msg.channel, "```Adding {} to the current server's auth list at level {}.\n```".format( user.name, args[2] ) )
                     return
-            await client.send_message( msg.channel, "```Failed to add {} to the current server's auth list.".format( args[1] ))
+            await client.send_message( msg.channel, "```Failed to add {} to the current server's auth list.\n```".format( args[1] ))
             return
-            print( "asdf" )
+        if args[0] == "del":
+            al = cur_serv.get_auth( msg.author )
+            if len(args) < 2:
+                await client.send_message( msg.channel, "```Usage {}del <user> -- User may be a mention, name or ID```")
+                return
+            user = find_user( args[1], cur_serv.me.members )
+            if user == None:
+                await client.send_message( msg.channel, "```Couldn't find user by the name of: {}\n```".format( args[1] ) )
+                return
+            if not user.id in cur_serv.auth:
+                await client.send_message( msg.channel, "```Doesn't look like {} is authorized yet.\n```".format( user.name ))
+                return
+            cur_serv.auth.pop(user.id, None) #destroy the key
+            await client.send_message( msg.channel, "```De-authorizing {} ({})\n```".format( user.name, user.id ) )
+            return
+        if args[0] == "auth":
+            auth_users = {}
+            print_str = "```smalltalk\nCurrently authorized users \n{}\n".format( '|'+('-'*47)+'|' )
+            print_str += "| Username (ID) " .ljust(32)+("| Auth Level ".ljust(16))+"|\n"
+            for k,v in cur_serv.list_auth().items():
+                print_str += ("| {} ({}) ".format(v[0].name, v[0].id).ljust(32)[:32])+("| {}".format(str(v[1])).ljust(16))+"|\n"
+            print_str += "{}```".format( '|'+('-'*47)+'|' )
+            await client.send_message( msg.channel, print_str )
+            return
         if args[0] == "eval":
             func = ""
             ops = [ '+', '-', '/', '*', '%' ]

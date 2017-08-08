@@ -2,6 +2,7 @@ import datetime, urllib3, random, json
 from datetime import date, timedelta
 from dateutil import parser, relativedelta
 from tzlocal import get_localzone as glz
+from discord.utils import find
 
 def bs_now():
     return datetime.datetime.now().astimezone( glz() )
@@ -13,9 +14,9 @@ def get_got_time():
     http = urllib3.PoolManager()
     response = http.request( 'GET', uri )
     data = json.loads( response.data.decode( 'utf-8' ) )
-    next_ep = parser.parse( data["_embedded"]["nextepisode"]["airstamp"] ).astimezone( get_localzone() )
+    next_ep = parser.parse( data["_embedded"]["nextepisode"]["airstamp"] ).astimezone( glz() )
     next_ep_name = data["_embedded"]["nextepisode"]["name"]
-    prev_ep = parser.parse( data["_embedded"]["previousepisode"]["airstamp"] ).astimezone( get_localzone() )
+    prev_ep = parser.parse( data["_embedded"]["previousepisode"]["airstamp"] ).astimezone( glz() )
     prev_ep_name = data["_embedded"]["previousepisode"]["name"]
     next_diff = relativedelta.relativedelta( next_ep, now )
     prev_diff = relativedelta.relativedelta( prev_ep, now )
@@ -78,3 +79,12 @@ def write_auth( servers, auth_file ):
         json.dump( auth_data, f, ensure_ascii=False )
     f.close()
     return
+
+def find_user( user, member_list ):
+    # find by name
+    f = find( lambda m: m.name == user, member_list )
+    if f == None: # find by id
+        f = find( lambda m: m.id == user, member_list )
+    if f == None: # find by mention
+        f = find( lambda m: m.mention == user, member_list )
+    return f

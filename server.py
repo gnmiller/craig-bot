@@ -1,4 +1,5 @@
 import discord, asyncio, collections, datetime, os, json
+from discord.utils import find
 from search import bs_search
 from tzlocal import get_localzone as glz
 from funcs import bs_now as bnow
@@ -55,9 +56,16 @@ class bs_server:
                 self.auth[e] = auth_data[self.me.id][e]
         return
     
+    def list_auth( self ):
+        user_list = {}
+        for u in self.auth:
+            #tuple of discord.user and auth level
+            user_list[u] = ( find( lambda m: m.id == u, self.cmd_q[-1].server.members ), self.auth[u] )
+        return user_list
+    
     def add_auth( self, user, level ):
         """return 0 if not in, else old level"""
-        if self.auth[user.id] == None:
+        if not user.id in self.auth:
             self.auth[user.id] = level
             return 0
         else:
