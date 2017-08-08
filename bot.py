@@ -187,7 +187,7 @@ async def on_message( msg ):
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
             if cur_serv.helper.results == None:
-                print( "Results error!\n" )
+                return
             if not msg.content.isdigit():
                 return
             for i in range( 1, 10 ):
