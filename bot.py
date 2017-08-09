@@ -172,7 +172,7 @@ async def on_message( msg ):
             return
         if args[0] == "eval":
             func = ""
-            ops = [ '+', '-', '/', '*', '%' ]
+            ops = [ '+', '-', '/', '*', '%', '.' ]
             for i in range( 1, len(args) ):
                 for c in args[i]:
                     if c in ops or c.isdigit():
