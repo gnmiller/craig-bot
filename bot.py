@@ -2,7 +2,8 @@
 
 import discord, asyncio, pytz, datetime, os, json
 from discord.utils import find
-from funcs import get_got_time, magic_8ball, help_str, write_auth, find_user, bs_now as bnow
+from funcs import *
+from funcs import bs_now as bnow
 from server import bs_server
 import pdb
 
@@ -26,10 +27,11 @@ async def on_ready():
     for s in client.servers:
         servers.append( bs_server( client, s, timeout_val, max_msg ) )
     await client.change_presence( game=discord.Game( name="indev build" ) )
-    print( "startup finished\n" )
+    print( "startup finished" )
     
 @client.event
 async def on_server_join( server ):
+    print( "new server!" )
     for s in servers:
         if s == server:
             return
@@ -38,6 +40,7 @@ async def on_server_join( server ):
 
 @client.event
 async def on_member_update( before, after ):
+    print( "member updated" )
     for s in servers:
         for u in s.users:
             if u == after.id:
@@ -89,12 +92,7 @@ async def on_message( msg ):
         if args[0] == "status":
             al = cur_serv.get_auth( msg.author )
             if al > 3:
-                my_pid = os.getpid()
-                created = os.path.getmtime( "/proc/"+str(my_pid) )
-                creat_str = "```smalltalk\nBot running with PID "+str(my_pid)+" since "
-                creat_str += datetime.datetime.fromtimestamp( int(created) ).strftime( date_str )
-                creat_str += "```\n"
-                await client.send_message( msg.channel, creat_str )
+                await client.send_message( msg.channel, creat_time() )
                 return
             else:
                 await client.send_message( msg.channel, "You are not authorized for this command. Required: 3 ({})\n".format( str( al ) ) )
@@ -162,25 +160,15 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "```De-authorizing {} ({})\n```".format( user.name, user.id ) )
             return
         if args[0] == "auth":
-            auth_users = {}
-            print_str = "```smalltalk\nCurrently authorized users \n{}\n".format( '|'+('-'*47)+'|' )
-            print_str += "| Username (ID) " .ljust(32)+("| Auth Level ".ljust(16))+"|\n"
-            for k,v in cur_serv.list_auth().items():
-                print_str += ("| {} ({}) ".format(v[0].name, v[0].id).ljust(32)[:32])+("| {}".format(str(v[1])).ljust(16))+"|\n"
-            print_str += "{}```".format( '|'+('-'*47)+'|' )
+            print_str = print_auth( cur_serv.list_auth() )
             await client.send_message( msg.channel, print_str )
             return
         if args[0] == "eval":
-            func = ""
-            ops = [ '+', '-', '/', '*', '%', '.' ]
-            for i in range( 1, len(args) ):
-                for c in args[i]:
-                    if c in ops or c.isdigit():
-                        func += c
-                    else:
-                        await client.send_message( msg.channel, "This is only a basic calculator!\n" )
-                        return
+            func = build_func( args )
             ret = eval( func )
+            if ret == None:
+                await client.send_message( msg.channel, "```Operation not supported!\n" )
+                return
             await client.send_message( msg.channel, "```Evaluated: {}\nResult: {}\n```".format( func, ret ) )
             return
         return
@@ -195,17 +183,5 @@ async def on_message( msg ):
                     await cur_serv.get_res( i )
                     return
             return
-        
-def query_string( content ):
-    query = ""
-    for i in range( 1, len(content) ):
-        query += content[i]+"+"
-    query = query[:len(query)-1]
-    return query
-
-async def whoami( serv, msg ):
-    msg_str = "```smalltalk\nUsername: {}\nID: {}\nAuth Level: {}\n```".format( msg.author.name, msg.author.id, serv.get_auth( msg.author ) )
-    serv.queue_cmd( msg )
-    return await client.send_message( msg.channel, msg_str )
 
 client.run( discord_key )

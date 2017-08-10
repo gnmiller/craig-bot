@@ -46,6 +46,7 @@ class bs_server:
         self.load_auth( "./authorized.json" )
     
     def load_auth( self, auth_file ):
+        """Clobber the existing auth list and load the new one from auth_file"""
         path = os.path.dirname( os.path.realpath( __file__ ) )
         with open( auth_file, 'r' ) as f:
             auth_data = json.load( f )
@@ -57,6 +58,7 @@ class bs_server:
         return
     
     def list_auth( self ):
+        """Return a dict of users (k,v) = ('uid', discord.User)"""
         user_list = {}
         for u in self.auth:
             #tuple of discord.user and auth level
@@ -74,24 +76,28 @@ class bs_server:
             return old
         
     def get_auth( self, user ):
+        """Return the users auth level or None"""
         if user.id in self.auth:
             return int(self.auth[user.id])
         else:
             return None
     
     def queue_msg( self, msg ):
+        """Enqueue a message (used to track what messages bot sends per server)"""
         if len( self.msg_q ) >= self.msg_lim:
             self.msg_q.popleft()
         self.msg_q.append( msg )
         return
     
     def queue_cmd( self, msg ):
+        """Enqueue a command, tracks commands the bot has received per server"""
         if len( self.cmd_q ) >= self.msg_lim:
             self.cmd_q.popleft()
         self.cmd_q.append( msg )
         return
     
     async def reset( self ):
+        """Set the bots state back to 'resting' ready for any command"""
         self.mode = None
         self.busy = False
         self.helper = None
@@ -102,11 +108,13 @@ class bs_server:
         return
     
     async def timeout( self ):
+        """Runs after a timer expires, calls reset()"""
         await self.reset()
         await self.client.send_message( self.cmd_q[-1].channel, "Timeout!\n" )
         return
 
     async def search( self, term, mode, apikey ):
+        """Create a search_helper if needed and execute a search."""
         if not self.busy:
             self.timer = bs_timer( self.max_time, self.timeout )
             self.helper = bs_search( term, mode, apikey )
@@ -135,6 +143,7 @@ class bs_server:
             return
         
     async def get_res( self, res ):
+        """Fetch a result object based on the search type and return the appropriate URI for that object"""
         if not self.busy:
             return
         if self.helper.mode == "yt":

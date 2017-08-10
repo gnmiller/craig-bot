@@ -20,7 +20,7 @@ class bs_search:
         response = youtube.search().list( q=self.term, part="id,snippet", maxResults=50 ).execute()
         count = 0
         for res in response.get( "items", [] ):
-            if res["id"]["kind"] == "youtube#video" :
+            if res["id"]["kind"] == "youtube#video":
                 count+=1
                 self.results[count] = result( res["snippet"]["title"], res["id"]["videoId"] )
                 if count >= 10 :
