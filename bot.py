@@ -1,6 +1,6 @@
 #!/usr/bin/python3.6
 
-import discord, asyncio, pytz, datetime, os, json
+import discord, asyncio, pytz, datetime, os, json, youtube_dl
 from discord.utils import find
 from funcs import *
 from funcs import bs_now as bnow
@@ -20,6 +20,7 @@ timeout_val = settings["bot"]["timeout"]
 max_msg = settings["bot"]["stored_msg"]
 date_str = "%m/%d/%y %I:%M %p"
 f.close()
+#discord.opus.load_opus( "/usr/lib/python3.6/site-packages/discord/bin/libopus-0.x64.dll" )
 
 servers = []
 @client.event
@@ -153,6 +154,9 @@ async def on_message( msg ):
             if user == None:
                 await client.send_message( msg.channel, "```Couldn't find user by the name of: {}\n```".format( args[1] ) )
                 return
+            if al < cur_serv.get_auth( user ) or not al == 5:
+                await client.send_message( msg.channel, "```You are not authorized\n" )
+                return
             if not user.id in cur_serv.auth:
                 await client.send_message( msg.channel, "```Doesn't look like {} is authorized yet.\n```".format( user.name ))
                 return
@@ -171,6 +175,64 @@ async def on_message( msg ):
                 return
             await client.send_message( msg.channel, "```Evaluated: {}\nResult: {}\n```".format( func, ret ) )
             return
+        if args[0] == "info":
+            if len(args) != 2:
+                await client.send_message( msg.channel, "```Usage {}status <user> -- User may be a mention, id or name.\n```".format( p ))
+                return
+            user = find_bs_user( args[1], cur_serv )
+            if user == None:
+                await client.send_message( msg.channel, "```Couldn't find user by the name of: {}\n```".format( args[1] ) )
+                return
+            await client.send_message( msg.channel, "Info for -- {}\n```smalltalk\nUser: {}\nAuth Level: {}\nStatus: {}\nSince: {}\n```".format( user.user.mention, user.user.name, cur_serv.get_auth( user.user ), user.state, user.last.strftime( date_str ) ) )
+            return
+        if args[0] == "join":
+            await client.send_message( msg.channel, "NYI" )
+            return
+            al = cur_serv.get_auth( msg.author )
+            if( al < 3 ):
+                await client.send_message( msg.channel, "```You are not authorized.\n```" )
+                return
+            if len(args) != 2:
+                await client.send_message( msg.channel, "```Usage {}join <channel>```" )
+                return
+            chan_name = args[1]
+            for c in cur_serv.me.channels:
+                if c.name.lower() == chan_name.lower() and c.type.name == "voice":
+                    if cur_serv.voice == None:
+                        pdb.set_trace()
+                        cur_serv.voice = await client.join_voice_channel( c )
+                        await client.send_message( msg.channel, "```Bot is now joining: {} at the request of {}\n```".format( c.name, msg.author.mention ) )
+                    else:
+                        await client.send_message( msg.channel, "```Bot is moving to: {} at the request of {}\n```".format( c.name, msg.author.mention ) )
+                        await cur_serv.voice.move_to( c )
+                    return
+        if args[0] == "leave":
+            await client.send_message( msg.channel, "NYI" )
+            return
+            al = cur_serv.get_auth( msg.author )
+            if( al < 3 ):
+                await client.send_message( msg.channel, "```You are not authorized.\n```" )
+                return
+            cur_serv.voice.disconnect()
+            await client.send_message( msg.channel, "```Bot is disconnecting from voice.\n```" )
+            return
+        if args[0] == "play":
+            await client.send_message( msg.channel, "NYI" )
+            return
+            if len(args) == 1:
+                await client.send_message( msg.channel, "```Usage {}play <yt_link>.\n```".format( p ))
+                return
+            if cur_serv.voice == None:
+                return
+            if cur_serv.voice.stream == None:
+                cur_serv.stream = await cur_serv.voice.create_ytdl_player( args[1] )
+            else:
+                if not cur.serv.stream.is_playing():
+                    cur_serv.stream = cur_serv.voice.create_ytdl_player( args[1] )
+                else:
+                    await client.send_message( msg.channel, "```The current song is still playing, try again in a bit!\n```" )
+                    return
+                cur_serv.stream.start()
         return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":

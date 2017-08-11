@@ -41,6 +41,9 @@ class bs_server:
         self.max_time = max_time
         self.users = {}
         self.game = None
+        self.voice = None
+        self.stream = None
+        self.voice_queue = []
         for m in server.members:
             self.users[m.id] = bs_user( m )
         self.load_auth( "./authorized.json" )
@@ -154,4 +157,23 @@ class bs_server:
             msg_str = "Selected film: {}\nName: {}\nhttps://www.themoviedb.org/movie/{}".format( str(res), self.helper.results[res].name, self.helper.results[res].id )
             await self.client.edit_message( self.msg_q[-1], msg_str )
             await self.reset()
-        return          
+        return
+    
+    def enqueue_video( self, yt_link ):
+        return self.video_queue.append( yt_link )
+    
+    def dequeue_video( self, yt_link ):
+        if yt_link in self.video_queue:
+            return self.video_queue.remove( yt_link )
+        else:
+            return None
+    
+    async def print_voice_queue( self ):
+        p_str = "Current YouTube video queue -- \n"
+        count = 0
+        for v in voice_queue:
+            ++count
+            p_str += "{}. {}".format( count, v )
+        p_str += "\n"
+        return p_str
+            

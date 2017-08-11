@@ -89,7 +89,7 @@ def write_auth( servers, auth_file ):
 
 def find_user( user, member_list ):
     # find by name
-    f = find( lambda m: m.name == user, member_list )
+    f = find( lambda m: m.name.lower() == user.lower(), member_list )
     if f == None: # find by id
         f = find( lambda m: m.id == user, member_list )
     if f == None: # find by mention
@@ -127,6 +127,14 @@ async def whoami( serv, msg ):
     msg_str = "```smalltalk\nUsername: {}\nID: {}\nAuth Level: {}\n```".format( msg.author.name, msg.author.id, serv.get_auth( msg.author ) )
     serv.queue_cmd( msg )
     return await client.send_message( msg.channel, msg_str )
+
+def find_bs_user( search, server ):
+    """Return a bs_user object for the user (ID, name, @), Server should be bs_server object"""
+    user = find_user( search, server.me.members )
+    if not user == None:
+        return server.users[user.id]
+    else:
+        return None
 
 def creat_time():
     my_pid = os.getpid()
