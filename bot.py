@@ -60,6 +60,8 @@ async def on_message( msg ):
         return
     if msg.author == client.user:
         cur_serv.queue_msg( msg )
+    if msg.content == client.user.mention:
+        await client.send_message( msg.channel, "Sorry, I don't normally respond to mentions! You can use {}help or {}h to get a PM of what I an do!.".format( p, p ) )
     now = bnow()
     p = msg.content[:len(prefix)]
     args = msg.content[len(prefix):].split()
