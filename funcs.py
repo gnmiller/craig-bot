@@ -70,19 +70,19 @@ def help_str( p, al ):
     ret_str = "```smalltalk\n{}help/{}h - Display this dialogue.\n    Parameters are given as [optional] and <required>\n    Commands that require privilege are displayed with a '*'.\n    Only commands which you can execute are displayed.\n\n".format( p, p )
     ret_str += "{}auth - Display currently authorized user's and their level.\n\n".format( p )
     if al >= 1: # min auth of 1 needed
-        ret_str += "{}add* <user> <level> - Add <user> to the auth list at level, user maybe @mention or a username.\n\n".format( p )
-        ret_str += "{}del* <user> - As with add but removes the user.\n\n".format( p )
-        ret_str += "{}set_game* <string> - Sets the bot's now playing message.\n\n".format( p )
+        ret_str += "{}add <user> <level> (*) - Add <user> to the auth list at level, user maybe @mention or a username.\n\n".format( p )
+        ret_str += "{}del <user> (*) - As with add but removes the user.\n\n".format( p )
+        ret_str += "{}set_game <string> (*) - Sets the bot's now playing message.\n\n".format( p )
     if al >= 2: # min auth of 2
         ret_str += ""
     if al >= 3: # min auth of 3
-        ret_str += "{}join* - Joins the bot to a voice channel.\n\n".format( p )
-        ret_str += "{}leave* - Leaves the active voice channel.\n\n".format( p )
-        ret_str += "{}status* - Display the bot's PID and when it was started.\n\n".format( p )
+        ret_str += "{}join (NYI) (*) - Joins the bot to a voice channel.\n\n".format( p )
+        ret_str += "{}leave (NYI) (*) - Leaves the active voice channel.\n\n".format( p )
+        ret_str += "{}status (*) - Display the bot's PID and when it was started.\n\n".format( p )
     if al >= 4: # min auth of 4
         ret_str += ""
     if al == 5: # admin only
-        ret_str += "{}save* [file] - Writes the auth data to [auth_file], destroying whatever is there.\n    NOTE: The auth file will always be loaded from './'\n\n".format( p )
+        ret_str += "{}save [file] (*) - Writes the auth data to [auth_file], destroying whatever is there.\n    NOTE: The auth file will always be loaded from './'\n\n".format( p )
     ret_str += "{}whoami - Display's the sender's username, Discord ID and current auth level.\n\n".format( p )
     ret_str += "{}got - Display when the last GoT episode aired and when the next will air (in terms of days, hours, minutes and seconds).\n\n".format( p )
     ret_str += "{}eval <func> - Performs simple calculations upon <func>, eg 2+2, etc\n\n".format( p )
