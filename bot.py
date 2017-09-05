@@ -4,6 +4,7 @@ import discord, asyncio, pytz, datetime, os, json, youtube_dl
 from discord.utils import find
 from funcs import *
 from funcs import bs_now as bnow
+from dateutil import relativedelta
 from server import bs_server
 import pdb
 
@@ -25,8 +26,10 @@ f.close()
 servers = []
 @client.event
 async def on_ready():
+    print( "beginning startup" )
     for s in client.servers:
         servers.append( bs_server( client, s, timeout_val, max_msg ) )
+        print( "new server: {} -- {}".format( s.name, s.id ) )
     await client.change_presence( game=discord.Game( name="indev build" ) )
     print( "startup finished" )
     
@@ -48,6 +51,21 @@ async def on_member_update( before, after ):
                 s.users[u].state = after.status
                 s.users[u].last = bnow()
     return
+
+@client.event
+async def on_message_edit( before, after ):
+    for s in servers:
+        if s.server == before.server:
+            cur_serv = s
+    if s.busy:
+        return
+    t = relativedelta.relativedelta( seconds = 90 )
+    for msg in s.cmd_q:
+        if msg.content.lower() == before.content.lower() and msg.author == before.author and (msg.timestamp + t) > after.timestamp:
+            return
+        else:
+            await on_message( after )
+            return
             
 @client.event
 async def on_message( msg ):
@@ -61,12 +79,13 @@ async def on_message( msg ):
     if msg.author == client.user:
         cur_serv.queue_msg( msg )
     if msg.content == client.user.mention:
-        await client.send_message( msg.channel, "Sorry, I don't normally respond to mentions! You can use {}help or {}h to get a PM of what I an do!.".format( prefix, prefix ) )
+        await client.send_message( msg.channel, "Sorry, I don't normally respond to mentions! You can use {}help or {}h to get a PM of what I an do!".format( prefix, prefix ) )
     now = bnow()
     p = msg.content[:len(prefix)]
     args = msg.content[len(prefix):].split()
     if p == prefix:
-        args[0] = args[0].lower()
+        for a in args:
+            a = a.lower()
         cur_serv.queue_cmd( msg )
         if args[0] == "help" or args[0] == "h":
             al = cur_serv.get_auth( msg.author )
