@@ -83,7 +83,7 @@ class bs_server:
         if user.id in self.auth:
             return int(self.auth[user.id])
         else:
-            return None
+            return 0
     
     def queue_msg( self, msg ):
         """Enqueue a message (used to track what messages bot sends per server)"""

@@ -7,6 +7,14 @@ from funcs import bs_now as bnow
 from dateutil import relativedelta
 from server import bs_server
 import pdb
+import logging
+
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
+
 
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
@@ -21,7 +29,8 @@ timeout_val = settings["bot"]["timeout"]
 max_msg = settings["bot"]["stored_msg"]
 date_str = "%m/%d/%y %I:%M %p"
 f.close()
-#discord.opus.load_opus( "/usr/lib/python3.6/site-packages/discord/bin/libopus-0.x64.dll" )
+if not discord.opus.is_loaded():
+    discord.opus.load_opus( )
 
 servers = []
 @client.event
@@ -30,7 +39,8 @@ async def on_ready():
     for s in client.servers:
         servers.append( bs_server( client, s, timeout_val, max_msg ) )
         print( "new server: {} -- {}".format( s.name, s.id ) )
-    await client.change_presence( game=discord.Game( name="indev build" ) )
+    temp = discord.Game( name="deez nuts" ) 
+    await client.change_presence( game=temp )
     print( "startup finished" )
     
 @client.event
@@ -87,8 +97,8 @@ async def on_message( msg ):
         for a in args:
             a = a.lower()
         cur_serv.queue_cmd( msg )
+        al = cur_serv.get_auth( msg.author )
         if args[0] == "help" or args[0] == "h":
-            al = cur_serv.get_auth( msg.author )
             await client.send_message( msg.author, help_str( prefix, al ) )
             return
         if args[0] == "yt":
@@ -113,7 +123,6 @@ async def on_message( msg ):
             await client.send_message( msg.channel, p_str )
             return
         if args[0] == "status":
-            al = cur_serv.get_auth( msg.author )
             if al > 3:
                 await client.send_message( msg.channel, creat_time() )
                 return
@@ -121,7 +130,6 @@ async def on_message( msg ):
                 await client.send_message( msg.channel, "You are not authorized for this command. Required: 3 ({})\n".format( str( al ) ) )
                 return
         if args[0] == "set_game":
-            al = cur_serv.get_auth( msg.author )
             if al < 1:
                 await client.send_message( msg.channel, "You are not authorized.\n" )
                 return
@@ -136,7 +144,6 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "Setting now playing to: {}\n".format( game_str ) )
             return
         if args[0] == "save":
-            al = cur_serv.get_auth( msg.author )
             if not al == 5:
                 await client.send_message( msg.channel, "You are not authorized.\n" )
                 return
@@ -149,7 +156,6 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "```Writing out the current authentication data to the file: "+file+"```" )
             return
         if args[0] == "add":
-            al = cur_serv.get_auth( msg.author )
             if len( args ) <= 2:
                 await client.send_message( msg.channel, "```Usage: {}add <user> <level> -- User may be a mention, name or ID```".format( prefix ) )
                 return
@@ -168,7 +174,6 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "```Failed to add {} to the current server's auth list.\n```".format( args[1] ))
             return
         if args[0] == "del":
-            al = cur_serv.get_auth( msg.author )
             if len(args) < 2:
                 await client.send_message( msg.channel, "```Usage {}del <user> -- User may be a mention, name or ID```")
                 return
@@ -208,9 +213,6 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "Info for -- {}\n```smalltalk\nUser: {}\nAuth Level: {}\nStatus: {}\nSince: {}\n```".format( user.user.mention, user.user.name, cur_serv.get_auth( user.user ), user.state, user.last.strftime( date_str ) ) )
             return
         if args[0] == "join":
-            await client.send_message( msg.channel, "NYI" )
-            return
-            al = cur_serv.get_auth( msg.author )
             if( al < 3 ):
                 await client.send_message( msg.channel, "```You are not authorized.\n```" )
                 return
@@ -221,17 +223,13 @@ async def on_message( msg ):
             for c in cur_serv.me.channels:
                 if c.name.lower() == chan_name.lower() and c.type.name == "voice":
                     if cur_serv.voice == None:
-                        pdb.set_trace()
                         cur_serv.voice = await client.join_voice_channel( c )
-                        await client.send_message( msg.channel, "```Bot is now joining: {} at the request of {}\n```".format( c.name, msg.author.mention ) )
+                        await client.send_message( msg.channel, "```Bot is now joining: {} at the request of {}\n```".format( c.name, msg.author.name ) )
                     else:
                         await client.send_message( msg.channel, "```Bot is moving to: {} at the request of {}\n```".format( c.name, msg.author.mention ) )
                         await cur_serv.voice.move_to( c )
                     return
         if args[0] == "leave":
-            await client.send_message( msg.channel, "NYI" )
-            return
-            al = cur_serv.get_auth( msg.author )
             if( al < 3 ):
                 await client.send_message( msg.channel, "```You are not authorized.\n```" )
                 return
@@ -239,22 +237,39 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "```Bot is disconnecting from voice.\n```" )
             return
         if args[0] == "play":
-            await client.send_message( msg.channel, "NYI" )
-            return
+            if al < 1:
+                await client.send_message( msg.channel, "```You are not authorized.\n```" )
+                return
             if len(args) == 1:
                 await client.send_message( msg.channel, "```Usage {}play <yt_link>.\n```".format( p ))
                 return
             if cur_serv.voice == None:
                 return
-            if cur_serv.voice.stream == None:
+            if cur_serv.stream == None:
                 cur_serv.stream = await cur_serv.voice.create_ytdl_player( args[1] )
+                cur_serv.stream.start()
+                title_str = "Now playing: {}".format( cur_serv.stream.title )
+                await client.change_presence( game=discord.Game( name=title_str ) )
+                await client.send_message( )
             else:
-                if not cur.serv.stream.is_playing():
+                if not cur_serv.stream.is_playing():
                     cur_serv.stream = cur_serv.voice.create_ytdl_player( args[1] )
+                    cur_serv.stream.start()
+                    title_str = "Now playing: {}".format( cur_serv.stream.title )
+                    await client.change_presence( game=discord.Game( name=title_str ) )
                 else:
                     await client.send_message( msg.channel, "```The current song is still playing, try again in a bit!\n```" )
                     return
-                cur_serv.stream.start()
+        if args[0] == "stop":
+            if al < 1:
+                await client.send_message( msg.channel, "```You are not authorized.\n```" )
+                return
+            if not cur_serv.stream == None and not cur_serv.stream.is_playing():
+                await client.send_message( msg.channel, "```No song playing.\n```" )
+                return
+            await client.send_message( msg.channel, "```Stopping playback.\n```" )
+            cur_serv.stream.stop()
+            cur_serv.stream = None
         return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
