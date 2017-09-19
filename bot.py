@@ -226,7 +226,7 @@ async def on_message( msg ):
                         cur_serv.voice = await client.join_voice_channel( c )
                         await client.send_message( msg.channel, "```Bot is now joining: {} at the request of {}\n```".format( c.name, msg.author.name ) )
                     else:
-                        await client.send_message( msg.channel, "```Bot is moving to: {} at the request of {}\n```".format( c.name, msg.author.mention ) )
+                        await client.send_message( msg.channel, "```Bot is moving to: {} at the request of {}\n```".format( c.name, msg.author.name ) )
                         await cur_serv.voice.move_to( c )
                     return
         if args[0] == "leave":
@@ -250,13 +250,18 @@ async def on_message( msg ):
                 cur_serv.stream.start()
                 title_str = "Now playing: {}".format( cur_serv.stream.title )
                 await client.change_presence( game=discord.Game( name=title_str ) )
-                await client.send_message( )
+                await client.send_message( msg.channel, "```{}```".format( title_str ) )
+                await client.delete_message( msg )
+                return
             else:
-                if not cur_serv.stream.is_playing():
+                if not cur_serv.voice == None and not cur_serv.stream.is_playing():
                     cur_serv.stream = cur_serv.voice.create_ytdl_player( args[1] )
                     cur_serv.stream.start()
                     title_str = "Now playing: {}".format( cur_serv.stream.title )
                     await client.change_presence( game=discord.Game( name=title_str ) )
+                    await client.send_message( msg.channel, "```{}```".format( title_str ) )
+                    await client.delete_message( msg )
+                    return
                 else:
                     await client.send_message( msg.channel, "```The current song is still playing, try again in a bit!\n```" )
                     return
@@ -270,6 +275,7 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "```Stopping playback.\n```" )
             cur_serv.stream.stop()
             cur_serv.stream = None
+            await client.change_presence( game=discord.Game( name="Now Playing: None" ) )
         return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
