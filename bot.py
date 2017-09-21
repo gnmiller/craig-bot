@@ -277,6 +277,15 @@ async def on_message( msg ):
             cur_serv.stream = None
             await client.change_presence( game=discord.Game( name="Now Playing: None" ) )
         return
+        if args[0] == "wide":
+            if len(args) != 2:
+                return
+            in_str = args[1]
+            out_str = ""
+            for c in in_str:
+                out_str += chr( 0xFF20 + ord( c ) )
+            await client.send_message( msg.channel, out_str )
+            return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
             if cur_serv.helper.results == None:
