@@ -276,14 +276,17 @@ async def on_message( msg ):
             cur_serv.stream.stop()
             cur_serv.stream = None
             await client.change_presence( game=discord.Game( name="Now Playing: None" ) )
-        return
+            return
         if args[0] == "wide":
             if len(args) != 2:
                 return
-            in_str = args[1]
+            in_str = ""
             out_str = ""
+            for i in range( 1, len(args) ):
+                in_str += args[i]+" "
             for c in in_str:
-                out_str += chr( 0xFF20 + ord( c ) )
+                out_str += chr( 0xFFE0 + ord( c ) )
+            print( "wide -- {} -- {}".format( in_str, out_str ) )
             await client.send_message( msg.channel, out_str )
             return
     elif cur_serv.busy == True:
