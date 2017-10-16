@@ -280,7 +280,7 @@ async def on_message( msg ):
             if al < 4:
                 await client.send_message( msg.channel, "```You are not authorized.\n```" )
                 return
-            valid = ["us-west", "us_west", "us_east", "us-east", "us-central", "eu-west", "eu-central", "singapore", "london", "sydney", "amsterdam", "frankfurt", "brazil"]
+            valid = ["us-west", "us-east", "us-central", "eu-west", "eu-central", "singapore", "london", "sydney", "amsterdam", "frankfurt", "brazil"]
             cur_reg = cur_serv.me.region
             if len(args) != 2:
                 await client.send_message( msg.channel, "```Usage: {}region <new_region> Valid Selections are: {}```".format( p, ", ".join(valid)  ) )
