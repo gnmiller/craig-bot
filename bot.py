@@ -107,9 +107,6 @@ async def on_message( msg ):
         if args[0] == "tmdb":
             temp = await cur_serv.search( query_string( args ), "tmdb", tmdb_key )
             return
-        if args[0] == "whoami":
-            temp = await whoami( cur_serv, msg )
-            return
         if args[0] == "got":
             temp = get_got_time()
             await client.send_message( msg.channel, temp )
@@ -284,14 +281,17 @@ async def on_message( msg ):
                 await client.send_message( msg.channel, "```You are not authorized.\n```" )
                 return
             valid = ["us_west", "us_east", "us_central", "eu_west", "eu_central", "singapore", "london", "sydney", "amsterdam", "frankfurt", "brazil"]
-            cur_reg = cur_serv.ServerRegion
+            cur_reg = cur_serv.me.region
+            if len(args) != 2:
+                await client.send_message( msg.channel, "```Usage: {}region <new_region> Valid Selections are: {}".format( p, ",".join(valid)  ) )
+                return
             req_reg = args[1].lower()
             if req_reg not in valid:
-                await client.send_message( msg.channel, "Invalid selection. Please choose from the following: {}".format( *valid ) )
+                await client.send_message( msg.channel, "```Invalid selection. Please choose from the following: {}```".format( ",".join(valid) ) )
                 return
-            await client.send_message( msg.channel, "Changing current region from {} to {}.\n".format( cur_req, req_reg ) )
+            await client.send_message( msg.channel, "```Changing current region from {} to {}.\n```".format( cur_req, req_reg ) )
             await client.edit_server( cur_serv.me, region=req_reg )
-            await client.send_message( msg.channel, "Region is now: {}.\n" )
+            await client.send_message( msg.channel, "```Region is now: {}.\n```" )
             return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
