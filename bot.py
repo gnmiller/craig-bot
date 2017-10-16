@@ -284,7 +284,7 @@ async def on_message( msg ):
             cur_reg = cur_serv.me.region
             if len(args) != 2:
                 await client.send_message( msg.channel, "```Usage: {}region <new_region> Valid Selections are: {}```".format( p, ", ".join(valid)  ) )
-                await client.send_message( msg.channel, "```Current region: {}.\n```".format( new_reg ) )
+                await client.send_message( msg.channel, "```Current region: {}.\n```".format( cur_serv.me.region ) )
                 return
             req_reg = args[1].lower()
             if req_reg not in valid:
