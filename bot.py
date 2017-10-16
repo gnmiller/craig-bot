@@ -292,7 +292,7 @@ async def on_message( msg ):
                 return
             await client.send_message( msg.channel, "```Changing current region from {} to {}.\n```".format( cur_reg, req_reg ) )
             await client.edit_server( cur_serv.me, region=req_reg )
-            await client.send_message( msg.channel, "```Region is now: {}.\n```".format( new_reg ) )
+            await client.send_message( msg.channel, "```Region is now: {}.\n```".format( req_reg ) )
             return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
