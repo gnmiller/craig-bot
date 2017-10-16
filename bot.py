@@ -202,9 +202,11 @@ async def on_message( msg ):
                 return
             await client.send_message( msg.channel, "```Evaluated: {}\nResult: {}\n```".format( func, ret ) )
             return
-        if args[0] == "info":
+        if args[0] == "info" or args[0] == "whoami":
+            if args[0] == "whoami":
+                args = [ "info", msg.author.name ]
             if len(args) != 2:
-                await client.send_message( msg.channel, "```Usage {}status <user> -- User may be a mention, id or name.\n```".format( p ))
+                await client.send_message( msg.channel, "```Usage {}info <user> -- User may be a mention, id or name.\n```".format( p ))
                 return
             user = find_bs_user( args[1], cur_serv )
             if user == None:
@@ -276,6 +278,20 @@ async def on_message( msg ):
             cur_serv.stream.stop()
             cur_serv.stream = None
             await client.change_presence( game=discord.Game( name="Now Playing: None" ) )
+            return
+        if args[0] == "region":
+            if al < 4:
+                await client.send_message( msg.channel, "```You are not authorized.\n```" )
+                return
+            valid = ["us_west", "us_east", "us_central", "eu_west", "eu_central", "singapore", "london", "sydney", "amsterdam", "frankfurt", "brazil"]
+            cur_reg = cur_serv.ServerRegion
+            req_reg = args[1].lower()
+            if req_reg not in valid:
+                await client.send_message( msg.channel, "Invalid selection. Please choose from the following: {}".format( *valid ) )
+                return
+            await client.send_message( msg.channel, "Changing current region from {} to {}.\n".format( cur_req, req_reg ) )
+            await client.edit_server( cur_serv.me, region=req_reg )
+            await client.send_message( msg.channel, "Region is now: {}.\n" )
             return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":

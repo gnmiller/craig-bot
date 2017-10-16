@@ -81,10 +81,11 @@ def help_str( p, al ):
         ret_str += "{}leave (*) - Leaves the active voice channel.\n\n".format( p )
         ret_str += "{}status (*) - Display the bot's PID and when it was started.\n\n".format( p )
     if al >= 4: # min auth of 4
-        ret_str += ""
+        ret_str += "{}region <region>* - Select a new region for the current server.\nValid selections are: us_west, us_east, us_central, eu_west, eu_central, singapore, london, sydney, amsterdam, frankfurt, brazil.\n\n".format( p )
     if al == 5: # admin only
         ret_str += "{}save [file] (*) - Writes the auth data to [auth_file], destroying whatever is there.\n    NOTE: The auth file will always be loaded from './'\n\n".format( p )
     ret_str += "{}whoami - Display's the sender's username, Discord ID and current auth level.\n\n".format( p )
+    ret_str += "{}info <user> - Like whoami but may specify a username.\n\n".format( p )
     ret_str += "{}got - Display when the last GoT episode aired and when the next will air (in terms of days, hours, minutes and seconds).\n\n".format( p )
     ret_str += "{}eval <func> - Performs simple calculations upon <func>, eg 2+2, etc\n\n".format( p )
     ret_str += "{}yt <search query> - Search YouTube for a video.\n\n".format( p )
