@@ -280,18 +280,18 @@ async def on_message( msg ):
             if al < 4:
                 await client.send_message( msg.channel, "```You are not authorized.\n```" )
                 return
-            valid = ["us_west", "us_east", "us_central", "eu_west", "eu_central", "singapore", "london", "sydney", "amsterdam", "frankfurt", "brazil"]
+            valid = ["us-west", "us-east", "us-central", "eu-west", "eu-central", "singapore", "london", "sydney", "amsterdam", "frankfurt", "brazil"]
             cur_reg = cur_serv.me.region
             if len(args) != 2:
-                await client.send_message( msg.channel, "```Usage: {}region <new_region> Valid Selections are: {}".format( p, ",".join(valid)  ) )
+                await client.send_message( msg.channel, "```Usage: {}region <new_region> Valid Selections are: {}```".format( p, ", ".join(valid)  ) )
                 return
             req_reg = args[1].lower()
             if req_reg not in valid:
-                await client.send_message( msg.channel, "```Invalid selection. Please choose from the following: {}```".format( ",".join(valid) ) )
+                await client.send_message( msg.channel, "```Invalid selection. Please choose from the following: {}```".format( ", ".join(valid) ) )
                 return
-            await client.send_message( msg.channel, "```Changing current region from {} to {}.\n```".format( cur_req, req_reg ) )
+            await client.send_message( msg.channel, "```Changing current region from {} to {}.\n```".format( cur_reg, req_reg ) )
             await client.edit_server( cur_serv.me, region=req_reg )
-            await client.send_message( msg.channel, "```Region is now: {}.\n```" )
+            await client.send_message( msg.channel, "```Region is now: {}.\n```".format( cur_serv.me.region ) )
             return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
