@@ -284,8 +284,7 @@ async def on_message( msg ):
             cur_reg = cur_serv.me.region
             if len(args) != 2:
                 await client.send_message( msg.channel, "```Usage: {}region <new_region> Valid Selections are: {}```".format( p, ", ".join(valid)  ) )
-                new_reg = cur_serv.me.region
-                await client.send_message( msg.channel, "```Current region:{}.\n```".format( new_reg ) )
+                await client.send_message( msg.channel, "```Current region: {}.\n```".format( new_reg ) )
                 return
             req_reg = args[1].lower()
             if req_reg not in valid:
@@ -293,6 +292,11 @@ async def on_message( msg ):
                 return
             await client.send_message( msg.channel, "```Changing current region from {} to {}.\n```".format( cur_reg, req_reg ) )
             await client.edit_server( cur_serv.me, region=req_reg )
+            # for some reason this creates a race condition on server.region
+            # result is the old region still prints to console
+            # this is what we call a "problem solving"
+            import time
+            time.sleep( 1 )
             await client.send_message( msg.channel, "```Region is now: {}.\n```".format( cur_serv.me.region ) )
             return
     elif cur_serv.busy == True:
