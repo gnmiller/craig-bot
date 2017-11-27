@@ -11,7 +11,7 @@ import logging
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler = logging.FileHandler(filename='var/discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
@@ -54,7 +54,6 @@ async def on_server_join( server ):
 
 @client.event
 async def on_member_update( before, after ):
-    print( "member updated" )
     for s in servers:
         for u in s.users:
             if u == after.id:
