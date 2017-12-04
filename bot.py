@@ -15,7 +15,6 @@ handler = logging.FileHandler(filename='var/discord.log', encoding='utf-8', mode
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-
 path = os.path.dirname(os.path.realpath(__file__))
 with open( path+'/settings.json' ) as f:
     settings = json.load( f )
@@ -40,10 +39,10 @@ async def on_ready():
         servers.append( bs_server( client, s, timeout_val, max_msg ) )
         print( "new server: {} -- {}".format( s.name, s.id ) )
     temp = discord.Game( name="deez nuts" ) 
-    pid_file = open( path+"/var/bot.pid", mode='w' )
-    print( "bot starting with pid={}".format( str( os.getpid() ) ) )
-    pid_file.write( str( os.getpid()) )
-    pid_file.close()
+    with open( path+"/var/bot.pid", mode='w' ) as pid_file:
+        print( "bot starting with pid={}".format( str( os.getpid() ) ) )
+        pid_file.write( str( os.getpid()) )
+        pid_file.close()
     await client.change_presence( game=temp )
     print( "startup finished" )
     
