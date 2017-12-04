@@ -300,6 +300,9 @@ async def on_message( msg ):
             await client.edit_server( cur_serv.me, region=req_reg )
             await client.send_message( msg.channel, "```Region is now: {}.\n```".format( req_reg ) )
             return
+        if args[0] == "mansnothot":
+            await client.send_message( msg.channel, "https://www.youtube.com/watch?v=3M_5oYU-IsU" )
+            return
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
             if cur_serv.helper.results == None:
