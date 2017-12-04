@@ -40,6 +40,10 @@ async def on_ready():
         servers.append( bs_server( client, s, timeout_val, max_msg ) )
         print( "new server: {} -- {}".format( s.name, s.id ) )
     temp = discord.Game( name="deez nuts" ) 
+    pid_file = open( path+"/var/bot.pid", mode='w' )
+    print( "bot starting with pid={}".format( str( os.getpid() ) ) )
+    pid_file.write( str( os.getpid()) )
+    pid_file.close()
     await client.change_presence( game=temp )
     print( "startup finished" )
     
@@ -192,6 +196,9 @@ async def on_message( msg ):
             return
         if args[0] == "eval":
             func = build_func( args )
+            if func == "2+2-1":
+                await client.send_message( msg.channel, "```2 plus 2 is 4, 4 minus 1 that's 3. Quick mafs!```" )
+                return
             ret = eval( func )
             if ret == None:
                 await client.send_message( msg.channel, "```Operation not supported!\n" )
