@@ -303,12 +303,14 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "https://www.youtube.com/watch?v=3M_5oYU-IsU" )
             return
     elif cur_serv.busy == True:
+        import pdb
+        pdb.set_trace()
         if cur_serv.mode == "search":
             if cur_serv.helper.results == None:
                 return
             if not msg.content.isdigit():
                 return
-            for i in range( 1, 10 ):
+            for i in range( 1, 11 ):
                 if i == int(msg.content):
                     await cur_serv.get_res( i )
                     return
