@@ -303,8 +303,6 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "https://www.youtube.com/watch?v=3M_5oYU-IsU" )
             return
     elif cur_serv.busy == True:
-        import pdb
-        pdb.set_trace()
         if cur_serv.mode == "search":
             if cur_serv.helper.results == None:
                 return
