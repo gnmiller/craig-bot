@@ -29,6 +29,8 @@ date_str = "%m/%d/%y %I:%M %p"
 f.close()
 if not discord.opus.is_loaded():
     discord.opus.load_opus( )
+# IF YOU CANT SAY ANYTHING NICE DONT SAY ANYTHING AT ALL
+urllib3.disable_warnings()
 
 servers = []
 @client.event
