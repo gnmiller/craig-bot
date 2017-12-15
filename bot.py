@@ -1,13 +1,12 @@
 #!/usr/bin/python3.6
 
-import discord, asyncio, pytz, datetime, os, json, youtube_dl
+import discord, asyncio, pytz, datetime, os, json, youtube_dl, sys, logging
 from discord.utils import find
 from funcs import *
 from funcs import bs_now as bnow
 from dateutil import relativedelta
 from server import bs_server
 import pdb
-import logging
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -302,6 +301,20 @@ async def on_message( msg ):
         if args[0] == "mansnothot":
             await client.send_message( msg.channel, "https://www.youtube.com/watch?v=3M_5oYU-IsU" )
             return
+        if args[0] == "shorten":
+            if len(args) != 2:
+                await client.send_message( msg.channel, "```Usage: {}short <uri>```".format( prefix ) )
+                return
+            h = urllib3.PoolManager()
+            r = h.request( "POST", "https://btcraig.in/shorten.php", fields={"target":"{}".format( args[1] ), "send":"true"} )
+            print( r.data )
+            return
+        if args[0] == "quit":
+            if al != 5:
+                await client.send_message( msg.channel, "```You are not authorized.\n````" )
+            await client.send_message( msg.channel, "```Stopping bot now...\n```" )
+            client.logout()
+            sys.exit( 0 )
     elif cur_serv.busy == True:
         if cur_serv.mode == "search":
             if cur_serv.helper.results == None:
