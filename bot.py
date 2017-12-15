@@ -307,7 +307,8 @@ async def on_message( msg ):
                 return
             h = urllib3.PoolManager()
             r = h.request( "POST", "https://btcraig.in/shorten.php", fields={"target":"{}".format( args[1] ), "send":"true"} )
-            print( r.data )
+            len_d = len( r.data )
+            await client.send_message( msg.channel, "```https://btcraig.in/{}```".format( r.data[len_d-7:len_d-1].decode() ) )
             return
         if args[0] == "quit":
             if al != 5:
