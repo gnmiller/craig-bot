@@ -301,7 +301,7 @@ async def on_message( msg ):
             await client.send_message( msg.channel, "```Region is now: {}.\n```".format( req_reg ) )
             return
         if args[0] == "mansnothot":
-            await client.send_message( msg.channel, "https://www.youtube.com/watch?v=3M_5oYU-IsU" )
+            await client.send_message( msg.channel, "https://btcraig.in/4c973e" )
             return
         if args[0] == "shorten":
             if len(args) != 2:
