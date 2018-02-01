@@ -91,6 +91,7 @@ def help_str( p, al ):
     ret_str += "{}yt <search query> - Search YouTube for a video.\n\n".format( p )
     ret_str += "{}tmdb <search query> - Search TMDb for a film. Currently television show search is not implemented.\n\n".format( p )
     ret_str += "{}8ball <question> - Ask the magic 8-Ball a question and find out your fate!\n\n".format( p )
+    ret_str += "{}shorten <URI> - Shorten a URL using https://btcraig.in/shorten.php.\n\n".format( p )
     ret_str += "```"
     return ret_str
 
