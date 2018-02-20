@@ -96,11 +96,10 @@ async def on_message( msg ):
     now = bnow()
     p = msg.content[:len(prefix)]
     args = msg.content[len(prefix):].split()
+    print( args )
     if p == prefix:
-        print( args )
         for i in range(0,len(args)):
             args[i] = args[i].lower()
-        print( args )
         cur_serv.queue_cmd( msg )
         al = cur_serv.get_auth( msg.author )
         if args[0] == "help" or args[0] == "h":
