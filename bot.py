@@ -96,6 +96,10 @@ async def on_message( msg ):
     now = bnow()
     p = msg.content[:len(prefix)]
     args = msg.content[len(prefix):].split()
+    try:
+        args[0] = args[0].lower()
+    except IndexError:
+        print( "I can't let you do that HAL." )
     if p == prefix:
         for a in args:
             a = a.lower()
