@@ -96,7 +96,6 @@ async def on_message( msg ):
     now = bnow()
     p = msg.content[:len(prefix)]
     args = msg.content[len(prefix):].split()
-    print( args )
     if p == prefix:
         for i in range(0,len(args)):
             args[i] = args[i].lower()
