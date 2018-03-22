@@ -263,9 +263,9 @@ async def on_message( msg ):
                 if not cur_serv.voice == None and not cur_serv.stream.is_playing():
                     cur_serv.stream = cur_serv.voice.create_ytdl_player( args[1] )
                     cur_serv.stream.start()
-                    title_str = "Now playing: {}".format( cur_serv.stream.title )
+                    title_str = ": {}".format( cur_serv.stream.title )
                     await client.change_presence( game=discord.Game( name=title_str ) )
-                    await client.send_message( msg.channel, "```{}```".format( title_str ) )
+                    await client.send_message( msg.channel, "```Now playing: {}```".format( title_str ) )
                     await client.delete_message( msg )
                     return
                 else:
