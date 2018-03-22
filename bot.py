@@ -97,8 +97,9 @@ async def on_message( msg ):
     p = msg.content[:len(prefix)]
     args = msg.content[len(prefix):].split()
     if p == prefix:
-        for i in range(0,len(args)):
-            args[i] = args[i].lower()
+        if "!play" not in msg.content:
+            for i in range(0,len(args)):
+                args[i] = args[i].lower()
         cur_serv.queue_cmd( msg )
         al = cur_serv.get_auth( msg.author )
         if args[0] == "help" or args[0] == "h":
