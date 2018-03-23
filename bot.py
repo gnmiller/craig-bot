@@ -251,7 +251,7 @@ async def on_message( msg ):
                 await client.send_message( msg.channel, "```Usage {}play <yt_link>.\n```".format( p ))
                 return
             if cur_serv.voice is None:
-                await client.send_message( msg.channel, "```Bot is not in voice yet! Use {}join first!.".format( p )
+                await client.send_message( msg.channel, "```Bot is not in voice yet! Use {}join first!.".format( p ) )
                 return
             cur_serv.enq_video( args[1] )
             if cur_serv.stream is None:
@@ -272,7 +272,7 @@ async def on_message( msg ):
                 await client.send_message( msg.channel, "```You are not authorized.\n```" )
                 return
             if cur_serv.voice is None:
-                await client.send_message( msg.channel, "```Bot is not in voice yet! Use {}join first!.".format( p )
+                await client.send_message( msg.channel, "```Bot is not in voice yet! Use {}join first!.".format( p ) )
                 return
             if not cur_serv.stream == None and not cur_serv.stream.is_playing():
                 await client.send_message( msg.channel, "```No song playing.\n```" )
@@ -287,7 +287,7 @@ async def on_message( msg ):
                 await client.send_message( msg.channel, "```You are not authorized.\n```" )
                 return
             if cur_serv.stream is None:
-                await client.send_message( msg.channel, "```Bot is not in voice yet! Use {}join first!.".format( p )
+                await client.send_message( msg.channel, "```Bot is not in voice yet! Use {}join first!.".format( p ) )
                 return
             await client.send_message( msg.channel, cur_serv.print_voice_queue() )
             return

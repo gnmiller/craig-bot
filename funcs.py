@@ -35,9 +35,10 @@ def help_str( p, al ):
         ret_str += "{}add <user> <level> (*) - Add <user> to the auth list at level, user maybe @mention or a username.\n\n".format( p )
         ret_str += "{}del <user> (*) - As with add but removes the user.\n\n".format( p )
         ret_str += "{}set_game <string> (*) - Sets the bot's now playing message.\n\n".format( p )
-        ret_str += "{}play (*) - Make the bot play a song. If a song is already playing an error is returned to the channel. If the bot is not in a channel already an error is also returned.\n\n".format( p )
+        ret_str += "{}play (*) - Make the bot play a song. If a song is already playing the new one is queued. If the bot is not in a channel already an error is also returned.\n\n".format( p )
+        ret_str += "{}queue (*) - Display the current queue of YouTube videos.\n\n.".format( p )
     if al >= 2: # min auth of 2
-        ret_str += "{}stop (*) - Stop playback of the current track. If no song is playing returns an error to the channel.\n\n".format( p )
+        ret_str += "{}stop (*) - Stop playback of the current track. If no song is playing returns an error to the channel. **UNTESTED WITH QUEUE**\n\n".format( p )
     if al >= 3: # min auth of 3
         ret_str += "{}join (*) - Joins the bot to a voice channel.\n\n".format( p )
         ret_str += "{}leave (*) - Leaves the active voice channel.\n\n".format( p )
