@@ -6,6 +6,7 @@ from funcs import *
 from funcs import bs_now as bnow
 from dateutil import relativedelta
 from server import bs_server
+from server import bs_timer
 import pdb
 
 logger = logging.getLogger('discord')
@@ -79,7 +80,7 @@ async def on_message_edit( before, after ):
         else:
             await on_message( after )
             return
-            
+
 @client.event
 async def on_message( msg ):
     cur_serv = None
@@ -249,31 +250,29 @@ async def on_message( msg ):
             if len(args) == 1:
                 await client.send_message( msg.channel, "```Usage {}play <yt_link>.\n```".format( p ))
                 return
-            if cur_serv.voice == None:
+            if cur_serv.voice is None:
+                await client.send_message( msg.channel, "```Bot is not in voice yet! Use {}join first!.".format( p )
                 return
-            if cur_serv.stream == None:
-                cur_serv.stream = await cur_serv.voice.create_ytdl_player( args[1] )
-                cur_serv.stream.start()
-                title_str = "Now playing: {}".format( cur_serv.stream.title )
-                await client.change_presence( game=discord.Game( name=title_str ) )
-                await client.send_message( msg.channel, "```{}```".format( title_str ) )
-                await client.delete_message( msg )
+            cur_serv.enq_video( args[1] )
+            if cur_serv.stream is None:
+                title = await cur_serv.play_video( p_flag=True )
+                await client.send_message( msg.channel, "```Now playing {}```".format( title ) )
                 return
             else:
-                if not cur_serv.voice == None and not cur_serv.stream.is_playing():
-                    cur_serv.stream = cur_serv.voice.create_ytdl_player( args[1] )
-                    cur_serv.stream.start()
-                    title_str = ": {}".format( cur_serv.stream.title )
-                    await client.change_presence( game=discord.Game( name=title_str ) )
-                    await client.send_message( msg.channel, "```Now playing: {}```".format( title_str ) )
-                    await client.delete_message( msg )
+                if len( cur_serv.video_queue ) > 1 or cur_serv.stream.is_playing():
+                    await client.send_message( msg.channel, "```Last song still playing. Adding to the queue. Use {}queue to check the queue ({} songs)```".format( p, len( cur_serv.video_queue ) ) ) 
                     return
                 else:
-                    await client.send_message( msg.channel, "```The current song is still playing, try again in a bit!\n```" )
+                    title = await cur_serv.play_video( p_flag=False )
+                    await client.send_message( msg.channel, "```Now playing {}```".format( title ) )
                     return
+            return
         if args[0] == "stop":
             if al < 1:
                 await client.send_message( msg.channel, "```You are not authorized.\n```" )
+                return
+            if cur_serv.voice is None:
+                await client.send_message( msg.channel, "```Bot is not in voice yet! Use {}join first!.".format( p )
                 return
             if not cur_serv.stream == None and not cur_serv.stream.is_playing():
                 await client.send_message( msg.channel, "```No song playing.\n```" )
@@ -282,6 +281,15 @@ async def on_message( msg ):
             cur_serv.stream.stop()
             cur_serv.stream = None
             await client.change_presence( game=discord.Game( name="Now Playing: None" ) )
+            return
+        if args[0] == "queue":
+            if al < 1:
+                await client.send_message( msg.channel, "```You are not authorized.\n```" )
+                return
+            if cur_serv.stream is None:
+                await client.send_message( msg.channel, "```Bot is not in voice yet! Use {}join first!.".format( p )
+                return
+            await client.send_message( msg.channel, cur_serv.print_voice_queue() )
             return
         if args[0] == "region":
             if al < 4:
