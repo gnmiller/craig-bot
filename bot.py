@@ -324,7 +324,8 @@ async def on_message( msg ):
         if args[0] == "quit":
             if al != 5:
                 await client.send_message( msg.channel, "```You are not authorized.\n````" )
-            await client.send_message( msg.channel, "```Stopping bot now...\n```" )
+                return
+            await client.send_message( msg.channel, "```Stopping bot now. If you're lucky I will auto-restart soon!\n```" )
             client.logout()
             sys.exit( 0 )
     elif cur_serv.busy == True:
