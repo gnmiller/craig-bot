@@ -107,6 +107,11 @@ async def on_message( msg ):
             await client.send_message( msg.author, help_str( prefix, al ) )
             return
         if args[0] == "yt":
+            # no dirtbags allowed
+            banned = ["lil dicky", "pillow talkin", "pillow talking", "chris brown", "freaky friday", "xxxtentacion"]
+            for word in banned:
+                if query_string(args) contains word:
+                    return
             temp = await cur_serv.search( query_string( args ), "yt", youtube_key )
             return
         if args[0] == "tmdb":
