@@ -38,8 +38,12 @@ def setup_logs( file ):
 from apiclient.discovery import build
 def yt_search( term, token ):
     """Return a list contains tuples with (title,id) for YT videos"""
-    yt = build( 'youtube', 'v3', developerKey=token )
-    resp = yt.search().list( q=term, part='id,snippet', maxResults=10 ).execute()
+    try:
+        yt = build( 'youtube', 'v3', developerKey=token )
+        resp = yt.search().list( q=term, part='id,snippet', maxResults=10 ).execute()
+    except HttpError:
+        print( 'oops' )
+        return
     result = []
     for r in resp.get( 'items', [] ):
         if r['id']['kind'] == 'youtube#video':

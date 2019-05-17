@@ -54,14 +54,18 @@ async def on_message( msg ):
     
     # check if the message was trying to retrieve a search result and transmit it
     for e in searches:
-        if msg.author == e[0].author and msg.channel == e[0].channel and msg.guild == e[0].guild:
+        if ( msg.author == e['msg'].author 
+            and msg.channel == e['msg'].channel 
+            and msg.guild == e['msg'].guild ):
             try:
-                int( msg.content )
+                choice = int( msg.content )
             except:
                 return
-            res = yt_search( e[2], youtube_token )
-            video_uri='https://www.youtube.com/watch?v={}'.format(res[int(msg.content)][1])
-            await e[1].edit( content='Selected Option: {}\nTitle: {}\n{}'.format(msg.content, res[int(msg.content)][0], video_uri) )
+            res = e['res']
+            video_uri='https://www.youtube.com/watch?v={}'.format( res[choice][1] )
+            await e['sent'].edit( 
+                                content='Selected Video: {}\nTitle: {}\n{}'.format( 
+                                choice, res[choice][0], video_uri ) )
             searches.remove(e)
 
     # normal query
@@ -76,14 +80,15 @@ async def on_message( msg ):
             query = cmd[2:len(cmd)]
             query = query[1:len(query)].lower() 
             sent = await msg.channel.send( '```smalltalk\nSearching for {}...```'.format( query ) )
-            searches.append( (msg, sent, query) )
+            t_dict = {'msg':msg, 'sent':sent, 'query':query, 'res':yt_search( query, youtube_token)}
+            searches.append(t_dict)
             send_str = '```smalltalk\nPlease select a video:```\n```smalltalk\n'
             count = 0
-            for e in yt_search( query, youtube_token ) :
+            for e in t_dict['res']:
+                send_str += '{}. {}\n'.format( count+1, t_dict['res'][count][0] )
                 count+=1
-                send_str += '{}. {}\n'.format( count, e[0] )
             send_str += '```\n'
             await sent.edit( content=send_str )
-            # t = bt_timer( 10, bt_timer_cb, sent ) # set a timeout for 10 seconds
+            t = bt_timer( 10, bt_timer_cb, sent ) # set a timeout for 10 seconds
             return
 client.run( discord_token )
