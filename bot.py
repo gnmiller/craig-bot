@@ -91,4 +91,20 @@ async def on_message( msg ):
             await sent.edit( content=send_str )
             t = bt_timer( 10, bt_timer_cb, sent ) # set a timeout for 10 seconds
             return
+        if cmd[0:4] == 'roll':
+            try:
+                temp = msg.content[ len( "!roll "):len(msg.content) ].split( 'd', 2 )
+                if len(temp) != 2:
+                    await msg.channel.send( '```Incorrect format. Try again with the following format: XdY.```' )
+                int( temp[0] )
+                int( temp[1] )
+            except:
+                await msg.channel.send( '```Incorrect format. Try again with the following format: XdY.```' )
+                return
+            output = []
+            import random
+            for i in range( 0, int(temp[0]) ):
+                output.append( random.randint( 1, int(temp[1]) ) )
+            await msg.channel.send( '```Rolled {} {}-sided dice and got the following results: {}```'.format(
+                                    temp[0], temp[1], output ) )
 client.run( discord_token )
