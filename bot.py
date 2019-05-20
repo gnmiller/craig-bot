@@ -1,5 +1,6 @@
-import discord, asyncio, urllib3, sys, os, logging
+import discord, asyncio, urllib3, sys, os, logging, random, string
 from funcs import *
+
 ##### init #####
 log = setup_logs( 'craig-bot.log' )
 settings = get_settings( 'settings.json' )
@@ -48,10 +49,10 @@ async def on_ready():
         pid_file.close()
     return 0
 
-searches = []
+searches = [] # this shouldnt be global but...
 @client.event
 async def on_message( msg ):
-    
+
     # check if the message was trying to retrieve a search result and transmit it
     for e in searches:
         if ( msg.author == e['msg'].author 
@@ -75,8 +76,13 @@ async def on_message( msg ):
         # strip out the cmd for easier use
         cmd = msg.content[len(pfx):len(msg.content)]
 
+        # help!
+        if ck_cmd( cmd, 'help' ) or ck_cmd( cmd, 'h' ):
+            await msg.author.send( '```{}```'.format( help() ) )
+            return
+
         # youtube search
-        if cmd[0:2] == 'yt':
+        if ck_cmd( cmd, 'yt' ):
             query = cmd[2:len(cmd)]
             query = query[1:len(query)].lower() 
             sent = await msg.channel.send( '```smalltalk\nSearching for {}...```'.format( query ) )
@@ -91,7 +97,9 @@ async def on_message( msg ):
             await sent.edit( content=send_str )
             t = bt_timer( 10, bt_timer_cb, sent ) # set a timeout for 10 seconds
             return
-        if cmd[0:4] == 'roll':
+        
+        # dice roll
+        if ck_cmd( cmd, 'roll' ):
             try:
                 temp = msg.content[ len( "!roll "):len(msg.content) ].split( 'd', 2 )
                 if len(temp) != 2:
@@ -102,9 +110,30 @@ async def on_message( msg ):
                 await msg.channel.send( '```Incorrect format. Try again with the following format: XdY.```' )
                 return
             output = []
-            import random
             for i in range( 0, int(temp[0]) ):
                 output.append( random.randint( 1, int(temp[1]) ) )
             await msg.channel.send( '```Rolled {} {}-sided dice and got the following results: {}```'.format(
                                     temp[0], temp[1], output ) )
+            return
+
+        # alt caps
+        if ck_cmd( cmd, 'alt' ):
+            try:
+                conv = msg.content[len( "!alt " ):len(msg.content)].upper()
+                count = 0
+                out = ''
+                for c in conv:
+                    if c not in string.ascii_letters:
+                        out+=c
+                        continue
+                    if count%2 == 0:
+                        out+=c
+                    else:
+                        out+=c.lower()
+                    count+=1
+
+                await msg.channel.send( '```{}```'.format( str(out ) ) )
+            except:
+                return
+            return
 client.run( discord_token )

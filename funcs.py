@@ -1,5 +1,6 @@
 import json, os, asyncio
 
+# functions...
 def chk_pfx( msg, p ):
     """check if msg content contains the given prefix"""
     return msg[:len(p)] == p
@@ -15,6 +16,7 @@ def get_settings( file ):
     f.close()
     return settings
 settings = get_settings( 'settings.json' )
+pfx = settings['bot']['prefix']
 
 import logging
 def setup_logs( file ):
@@ -50,3 +52,19 @@ def yt_search( term, token ):
             result.append( (r['snippet']['title'], r['id']['videoId'] ) )
     return result
 
+def ck_cmd( msg, cmd ):
+    """Checks if the first n characters of msg contain cmd. Should not contain the bot prefix when passed in.
+    msg: String to search in..
+    cmd: String to search for."""
+    return cmd in msg[0:len(cmd)]
+
+def help():
+    """Print help string...."""
+    path = os.path.dirname( os.path.realpath( __file__ ))
+    with open( '{}/help.json'.format( path ) ) as f:
+        help_strings = json.load( f )
+    f.close()
+    out_str = ''
+    for e in help_strings:
+        out_str+='{}\n'.format( help_strings[e].format( pfx ) )
+    return out_str
