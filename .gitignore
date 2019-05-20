@@ -4,6 +4,5 @@
 *swp
 *.log
 __pycache__
-*.orig
+*.log
 var/
-tempbot.py
