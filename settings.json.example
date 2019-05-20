@@ -14,9 +14,5 @@
     "bot":
     {
         "prefix":"!",
-        "timeout":"TIMEOUT TIME",
-        "auth_file":"/path/to/auth/file",
-        "my_name":"BeeStingBot",
-        "stored_msg":100
     }
 }
