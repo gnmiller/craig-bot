@@ -59,7 +59,7 @@ async def on_message( msg ):
             and msg.channel == e['msg'].channel 
             and msg.guild == e['msg'].guild ):
             try:
-                choice = int( msg.content )
+                choice = int( msg.content ) - 1
             except:
                 return
             res = e['res']

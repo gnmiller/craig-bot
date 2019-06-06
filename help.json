@@ -1,0 +1,6 @@
+{
+
+    "yt":"{}yt <search parameters>: Searches YouTube for up to 10 videos using the given parameters.Video can be selected by inputting the desired video # after results are returned.",
+    "roll":"{}roll XdY: Rolls a Y-sided die X times. Results are returned in an unsorted list.",
+    "alt":"{}alt <string>: CoNvErTs ThE sTrInG iNtO aLt CaPs."
+}
