@@ -120,9 +120,12 @@ async def on_message( msg ):
             query = query[1:len(query)].lower()
             sent = await msg.channel.send( '```smalltalk\nSearching for {}...```'.format( query ) )
             t_dict = {'msg':msg, 'sent':sent, 'query':query, 'res':omdb_search( query, omdb_token ), 'kind':'omdb' }
-            if t_dict['res'] <= 0:
-                await sent.edit( "```No results return for search (Query: {}). Please try again.```".format( query ) )
-                return
+            try:
+                if t_dict['res'] <= 0:
+                    await sent.edit( "```No results return for search (Query: {}). Please try again.```".format( query ) )
+                    return
+            except TypeError:
+                pass
             searches.append(t_dict)
             send_str = '```smalltalk\nPlease select a result:```\n```smalltalk\n'
             count = 0
