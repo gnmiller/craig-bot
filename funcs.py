@@ -52,6 +52,28 @@ def yt_search( term, token ):
             result.append( (r['snippet']['title'], r['id']['videoId'] ) )
     return result
 
+import omdb
+def omdb_search( term, token, **kwargs ):
+    omdb.set_default( 'apikey', token )
+    """Return a list containing tuples of (film name, title, year, rating, id)"""
+    try:
+        res = omdb.search( term )
+        ret = []
+        count = 0
+        ok_types = ['movie','series','episode'] # ignore games, etc
+        for r in res:
+            if r['type'] in ok_types:
+                ret.append( ( r['title'], r['year'], r['imdb_id'] ) )
+                count+=1
+        if len(ret) <= 0:
+            return -1
+        else:
+            return ret
+    except:
+        print( "help!" )
+        return -1
+
+
 def ck_cmd( msg, cmd ):
     """Checks if the first n characters of msg contain cmd. Should not contain the bot prefix when passed in.
     msg: String to search in..

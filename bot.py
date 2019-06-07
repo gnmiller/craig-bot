@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# Craig-bot
+# A simple Discord bot built using the Python Discord API
+# https://discordpy.readthedocs.io/en/latest/api.html
+# Version 0.1.0
+__version__ = "Version 0.1.1"
+
 import discord, asyncio, urllib3, sys, os, logging, random, string
 from funcs import *
 
@@ -7,6 +14,7 @@ settings = get_settings( 'settings.json' )
 pfx = settings['bot']['prefix']
 discord_token = settings['discord']['token']
 youtube_token = settings['youtube']['token']
+omdb_token = settings['omdb']['token']
 log = setup_logs( 'craig-bot.log' )
 
 if not discord.opus.is_loaded():
@@ -62,12 +70,19 @@ async def on_message( msg ):
                 choice = int( msg.content ) - 1
             except:
                 return
-            res = e['res']
-            video_uri='https://www.youtube.com/watch?v={}'.format( res[choice][1] )
-            await e['sent'].edit( 
-                                content='Selected Video: {}\nTitle: {}\n{}'.format( 
-                                choice, res[choice][0], video_uri ) )
-            searches.remove(e)
+            if e['kind'] == 'youtube':
+                res = e['res']
+                video_uri='https://www.youtube.com/watch?v={}'.format( res[choice][1] )
+                await e['sent'].edit( 
+                                    content='Selected Video: {}\nTitle: {}\n{}'.format( 
+                                    choice, res[choice][0], video_uri ) )
+                searches.remove(e)
+            elif e['kind'] == 'omdb':
+                res = e['res']
+                imdb_uri ='https://www.imdb.com/title/{}/'.format( res[choice][2] )
+                await e['sent'].edit( content='Selected: {} ({})\n{}'.format( res[choice][0], res[choice][1], imdb_uri ) )
+                searches.remove(e)
+            return
 
     # normal query
     if not chk_pfx( msg.content, pfx ):
@@ -86,7 +101,7 @@ async def on_message( msg ):
             query = cmd[2:len(cmd)]
             query = query[1:len(query)].lower() 
             sent = await msg.channel.send( '```smalltalk\nSearching for {}...```'.format( query ) )
-            t_dict = {'msg':msg, 'sent':sent, 'query':query, 'res':yt_search( query, youtube_token)}
+            t_dict = {'msg':msg, 'sent':sent, 'query':query, 'res':yt_search( query, youtube_token ), 'kind':'youtube' }
             searches.append(t_dict)
             send_str = '```smalltalk\nPlease select a video:```\n```smalltalk\n'
             count = 0
@@ -96,6 +111,27 @@ async def on_message( msg ):
             send_str += '```\n'
             await sent.edit( content=send_str )
             t = bt_timer( 10, bt_timer_cb, sent ) # set a timeout for 10 seconds
+            return
+
+        # omdb search
+        # happily both commands are 4 chars so we can stay lazy
+        if ck_cmd( cmd, 'omdb' ) or ck_cmd( cmd, 'imdb' ):
+            query = cmd[4:len(cmd)]
+            query = query[1:len(query)].lower()
+            sent = await msg.channel.send( '```smalltalk\nSearching for {}...```'.format( query ) )
+            t_dict = {'msg':msg, 'sent':sent, 'query':query, 'res':omdb_search( query, omdb_token ), 'kind':'omdb' }
+            if t_dict['res'] <= 0:
+                await sent.edit( "```No results return for search (Query: {}). Please try again.```".format( query ) )
+                return
+            searches.append(t_dict)
+            send_str = '```smalltalk\nPlease select a result:```\n```smalltalk\n'
+            count = 0
+            for e in t_dict['res']:
+                send_str += '{}. {} ({})\n'.format( count+1, t_dict['res'][count][0], t_dict['res'][count][1] )
+                count+=1
+            send_str+='```\n'
+            await sent.edit( content=send_str )
+            t = bt_timer( 10, bt_timer_cb, sent ) # 10 sec timeout...
             return
         
         # dice roll
