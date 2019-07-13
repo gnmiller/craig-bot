@@ -38,8 +38,10 @@ class bt_timer:
         self._task.cancel()
 
 async def bt_timer_cb( msg ):
+    import pdb
+    pdb.set_trace()
     for e in searches:
-        if e[1].id == msg.id:
+        if e['sent'].id == msg.id:
             await msg.edit( content='```smalltalk\nTimed out! Please try again!\n```' )
             try:
                 searches.remove(e)
@@ -74,8 +76,8 @@ async def on_message( msg ):
                 res = e['res']
                 video_uri='https://www.youtube.com/watch?v={}'.format( res[choice][1] )
                 await e['sent'].edit( 
-                                    content='Selected Video: {}\nTitle: {}\n{}'.format( 
-                                    choice, res[choice][0], video_uri ) )
+                                    content='Title: {}\n{}'.format( 
+                                    res[choice][0], video_uri ) )
                 searches.remove(e)
             elif e['kind'] == 'omdb':
                 res = e['res']
@@ -165,7 +167,7 @@ async def on_message( msg ):
                     if c not in string.ascii_letters:
                         out+=c
                         continue
-                    if count%2 == 0:
+                    if count%2 == 1:
                         out+=c
                     else:
                         out+=c.lower()
