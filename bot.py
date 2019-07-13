@@ -38,8 +38,6 @@ class bt_timer:
         self._task.cancel()
 
 async def bt_timer_cb( msg ):
-    import pdb
-    pdb.set_trace()
     for e in searches:
         if e['sent'].id == msg.id:
             await msg.edit( content='```smalltalk\nTimed out! Please try again!\n```' )
