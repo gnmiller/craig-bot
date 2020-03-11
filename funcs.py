@@ -37,6 +37,11 @@ def setup_logs( file ):
     l.addHandler( fh )
     return l
 
+# inputs: term, token
+#   term (str) : a string to pass to the youtube API for searching
+#   token (str) : youtube api token
+# outputs: result
+#   result (tuple) : tuple comprised of a symbolic name, and an id
 from apiclient.discovery import build
 def yt_search( term, token ):
     """Return a list contains tuples with (title,id) for YT videos"""
@@ -49,7 +54,8 @@ def yt_search( term, token ):
     result = []
     for r in resp.get( 'items', [] ):
         if r['id']['kind'] == 'youtube#video':
-            result.append( (r['snippet']['title'], r['id']['videoId'] ) )
+            result.append( ( r['snippet']['title'], 
+                            r['id']['videoId'] ) )
     return result
 
 import omdb
