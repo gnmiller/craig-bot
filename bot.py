@@ -1,5 +1,6 @@
 import discord, asyncio, urllib3, sys, os, logging, random, string
 from funcs import *
+import pdb
 
 ##### init #####
 log = setup_logs( 'craig-bot.log' )
@@ -9,11 +10,14 @@ discord_token = settings['discord']['token']
 youtube_token = settings['youtube']['token']
 log = setup_logs( 'craig-bot.log' )
 
-if not discord.opus.is_loaded():
-    discord.opus.load_opus()
+intents = discord.Intents.all()
+
+# this has never worked and i dont want to implement it
+#if not discord.opus.is_loaded():
+#    discord.opus.load_opus()
 urllib3.disable_warnings()
 
-client = discord.Client()
+client = discord.Client( intents=intents )
 
 class bt_timer:
     def __init__(self, timeout, callback, msg):
@@ -52,7 +56,6 @@ async def on_ready():
 searches = [] # this shouldnt be global but...
 @client.event
 async def on_message( msg ):
-
     # check if the message was trying to retrieve a search result and transmit it
     for e in searches:
         if ( msg.author == e['msg'].author 
