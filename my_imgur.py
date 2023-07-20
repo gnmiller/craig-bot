@@ -30,7 +30,7 @@ class my_imgur:
         self.my_uri = -1
         self.my_type = -1
         self.my_name = -1
-        self.imgur_client = Imgur({'client_id': api_key, 'client_secret':secret_key})
+        self.imgur_client = Imgur({'client_id': api_key, 'client_secret':secret_key, 'access_token':access_key, 'refresh_token':refresh_key})
 
     def fetch_image( self, image_uri ):
         self.my_uri = image_uri
