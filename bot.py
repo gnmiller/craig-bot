@@ -8,6 +8,7 @@ settings = get_settings( 'settings.json' )
 pfx = settings['bot']['prefix']
 discord_token = settings['discord']['token']
 youtube_token = settings['youtube']['token']
+imgur_token = settings['imgur']['token']
 log = setup_logs( 'craig-bot.log' )
 
 intents = discord.Intents.all()
@@ -19,6 +20,7 @@ urllib3.disable_warnings()
 
 client = discord.Client( intents=intents )
 
+# internal timer function to prevent infinite waiting on a user to respond to a query
 class bt_timer:
     def __init__(self, timeout, callback, msg):
         self._timeout = timeout
@@ -42,6 +44,7 @@ async def bt_timer_cb( msg ):
             except:
                 pass
     return
+## end timer
 
 ##### bot stuff #####
 @client.event
@@ -109,6 +112,7 @@ async def on_message( msg ):
                     await msg.channel.send( '```Incorrect format. Try again with the following format: XdY.```' )
                 int( temp[0] )
                 int( temp[1] )
+                return
             except:
                 await msg.channel.send( '```Incorrect format. Try again with the following format: XdY.```' )
                 return
@@ -138,4 +142,13 @@ async def on_message( msg ):
             except:
                 return
             return
+
+        # submit image to imgur API
+        if ck_cmd( cmd, 'imgur' ):
+            try:
+                # TODO
+            except:
+                return
+            return
+
 client.run( discord_token )

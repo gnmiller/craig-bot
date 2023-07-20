@@ -6,3 +6,9 @@
 __pycache__
 *.log
 var/
+*.jpg
+*jpeg
+*.png
+*.gif
+*.webm
+*.svg
