@@ -76,6 +76,7 @@ class my_imgur:
             return e
 
     def fetch_image( self, image_uri ):
+        # TODO add a check if the URI is an IMGUR link and kickback an appropriate error message
         """Propagate data fields based on supplied URI
         
         Returns:
