@@ -15,6 +15,8 @@ def get_settings( file ):
         settings = json.load( f )
     f.close()
     return settings
+
+# why the heck am i setting globals here??
 settings = get_settings( 'settings.json' )
 pfx = settings['bot']['prefix']
 
