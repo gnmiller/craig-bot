@@ -1,7 +1,0 @@
-{
-
-    "yt":"{}yt <search parameters>: Searches YouTube for up to 10 videos using the given parameters.Video can be selected by inputting the desired video # after results are returned.",
-    "roll":"{}roll XdY: Rolls a Y-sided die X times. Results are returned in an unsorted list.",
-    "alt":"{}alt <string>: CoNvErTs ThE sTrInG iNtO aLt CaPs."
-    "imdb":"{}odb <search parameters>: Searches the OMDb for the given query. Up to 10 results are returned (but may be less than 10). An IMDb URI is returned. Only searching for films is supported at this time."
-}
