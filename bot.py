@@ -1,178 +1,131 @@
 #!/usr/bin/env python3
-# Craig-bot
-# A simple Discord bot built using the Python Discord API
-# https://discordpy.readthedocs.io/en/latest/api.html
-# Version 0.1.0
-__version__ = "Version 0.1.1"
+import discord, openai # needed
+import asyncio, urllib3, sys, os, logging, random, string, json, sqlite3# maybe no longer needed
+from funcs import * # bot
+from cb_guild import cb_guild as cb_guild
+import pdb # remove in prod
 
-import discord, asyncio, urllib3, sys, os, logging, random, string
-from funcs import *
-
-##### init #####
-log = setup_logs( 'craig-bot.log' )
+# settings
 settings = get_settings( 'settings.json' )
 pfx = settings['bot']['prefix']
 discord_token = settings['discord']['token']
 youtube_token = settings['youtube']['token']
-omdb_token = settings['omdb']['token']
-log = setup_logs( 'craig-bot.log' )
+openai_token = settings['openai']['token']
+db_file = settings['bot']['db_file']
 
-if not discord.opus.is_loaded():
-    discord.opus.load_opus()
-urllib3.disable_warnings()
+# these should not be globals...
+cmds = ['help','set','get']
+opts = ['prof_filter']
 
-client = discord.Client()
+# init bot and openai
+openai.api_key = openai_token
+intents = discord.Intents( messages = True, presences = True, guilds = True, members = True, reactions = True )
+client = discord.Client(intents=intents)
 
-class bt_timer:
-    def __init__(self, timeout, callback, msg):
-        self._timeout = timeout
-        self._callback = callback
-        self._task = asyncio.ensure_future(self._job())
-        self._msg = msg
+# setup slash commands NYI
+# tree = app_commands.CommandTree(client)
 
-    async def _job(self):
-        await asyncio.sleep(self._timeout)
-        await self._callback( self._msg )
+def invite_uri():
+    if settings == None:
+        raise FileNotFoundError("settings not loaded!")
+    else:
+        client_id = settings['discord']['app_id']
+        permissions = settings['bot']['perms']
+        scope = "bot%20applications.commands"
+        ret = "https://discord.com/api/oauth2/authorize?client_id={}&permissions={}&scope={}".format(client_id,permissions,scope)
+        return ret
 
-    def cancel(self):
-        self._task.cancel()
-
-async def bt_timer_cb( msg ):
-    for e in searches:
-        if e['sent'].id == msg.id:
-            await msg.edit( content='```smalltalk\nTimed out! Please try again!\n```' )
-            try:
-                searches.remove(e)
-            except:
-                pass
-    return
-
-##### bot stuff #####
+bot_id = None
+guilds = {}
 @client.event
 async def on_ready():
-    log.debug( "begin startup process" )
-    path = os.path.dirname( os.path.realpath( __file__ ))
-    with open( path + '/var/bot.pid', mode='w' ) as pid_file:
-        pid_file.write( str(os.getpid()) )
-        pid_file.close()
-    return 0
+    global bot_id
+    global guilds
+    print( "ready!" )
+    init_db( db_file )
+    bot_id = client.user.id
+    for g in client.guilds:
+        t_guild = check_guild( g, db_file )
+        guilds[t_guild.guild_id] = t_guild
+        if not t_guild:
+            insert_guild( g, data=None, db_file=db_file )
+        else: 
+            continue
+    print(invite_uri())
+    print("My Discord ID: {}".format(bot_id))
+    return
 
-searches = [] # this shouldnt be global but...
 @client.event
 async def on_message( msg ):
+    global bot_id
+    global guilds
+    global cmds
+    global opts
+    pinged = False
 
-    # check if the message was trying to retrieve a search result and transmit it
-    for e in searches:
-        if ( msg.author == e['msg'].author 
-            and msg.channel == e['msg'].channel 
-            and msg.guild == e['msg'].guild ):
-            try:
-                choice = int( msg.content ) - 1
-            except:
+    # prefix block
+    try:
+        if msg.content[0:len(pfx)] is pfx: # this is a command wake up!
+            text = msg.content[len(pfx)+2:len(msg.content)] # slice off the prefix
+            cmd = get_cmd( text )
+            if cmd is None:
+                await msg.channel.send("huh?")
+            else:
+                # get commands
+                if cmd == 'get':
+                    opt = get_opt( text )
+                    if opt == 'prof_filter': # get prof_filter
+                        state = guilds[msg.guild.id].get_prof_filter()
+                        send_str = "Current Sever: {}\nProfanity Filter Status: {}\n".format(msg.guild.name,state)
+                
+                # set commands
+                elif cmd == 'set':
+                    opt = get_opt( text )
+                    if opt == 'prof_filter': # set prof_filter
+                        return None
+                    
+                # no command
+                else:
+                    return None
+    except Exception as e:
+        return None
+    
+    # @ mentions block
+    try:
+        for m in msg.mentions:
+            print("caught my ID setting pinged true")
+            if m.id == bot_id:
+                pinged = True
+            pinged = True
+        if pinged == False:
+            return
+        else:
+            # do bot stuff
+            if "help" in msg.content or "usage" in msg.content and msg.content.length > 15: # need a better check to ignore real prompts
+                text = print_help()
+                await msg.channel.send(text)
+            else:
+                # assume we want to query openAI
+                prompt = msg.content
+                msg_to_edit = await msg.channel.send("```Please hold while I commune with SkyNet.```")
+                oai_resp = prompt_openai( prompt, openai_token )
+                await msg_to_edit.edit("```"+str(oai_resp.choices[0].message.content+"```"))
                 return
-            if e['kind'] == 'youtube':
-                res = e['res']
-                video_uri='https://www.youtube.com/watch?v={}'.format( res[choice][1] )
-                await e['sent'].edit( 
-                                    content='Title: {}\n{}'.format( 
-                                    res[choice][0], video_uri ) )
-                searches.remove(e)
-            elif e['kind'] == 'omdb':
-                res = e['res']
-                imdb_uri ='https://www.imdb.com/title/{}/'.format( res[choice][2] )
-                await e['sent'].edit( content='Selected: {} ({})\n{}'.format( res[choice][0], res[choice][1], imdb_uri ) )
-                searches.remove(e)
-            return
+        return None # catch all return
+    except Exception as e:
+        return None
 
-    # normal query
-    if not chk_pfx( msg.content, pfx ):
-        return
-    else:
-        # strip out the cmd for easier use
-        cmd = msg.content[len(pfx):len(msg.content)]
+@client.event
+async def on_guild_join( guild ):
+    try:
+        row = check_guild( guild, db_file )
+        if row == None:
+            ret = insert_guild( guild, db_file )
+        else:
+           ret = None
+        return ret
+    except FileNotFoundError as e:
+        print(e)
+        return None
 
-        # help!
-        if ck_cmd( cmd, 'help' ) or ck_cmd( cmd, 'h' ):
-            await msg.author.send( '```{}```'.format( help() ) )
-            return
-
-        # youtube search
-        if ck_cmd( cmd, 'yt' ):
-            query = cmd[2:len(cmd)]
-            query = query[1:len(query)].lower() 
-            sent = await msg.channel.send( '```smalltalk\nSearching for {}...```'.format( query ) )
-            t_dict = {'msg':msg, 'sent':sent, 'query':query, 'res':yt_search( query, youtube_token ), 'kind':'youtube' }
-            searches.append(t_dict)
-            send_str = '```smalltalk\nPlease select a video:```\n```smalltalk\n'
-            count = 0
-            for e in t_dict['res']:
-                send_str += '{}. {}\n'.format( count+1, t_dict['res'][count][0] )
-                count+=1
-            send_str += '```\n'
-            await sent.edit( content=send_str )
-            t = bt_timer( 10, bt_timer_cb, sent ) # set a timeout for 10 seconds
-            return
-
-        # omdb search
-        # happily both commands are 4 chars so we can stay lazy
-        if ck_cmd( cmd, 'omdb' ) or ck_cmd( cmd, 'imdb' ):
-            query = cmd[4:len(cmd)]
-            query = query[1:len(query)].lower()
-            sent = await msg.channel.send( '```smalltalk\nSearching for {}...```'.format( query ) )
-            t_dict = {'msg':msg, 'sent':sent, 'query':query, 'res':omdb_search( query, omdb_token ), 'kind':'omdb' }
-            try:
-                if t_dict['res'] <= 0:
-                    await sent.edit( "```No results return for search (Query: {}). Please try again.```".format( query ) )
-                    return
-            except TypeError:
-                pass
-            searches.append(t_dict)
-            send_str = '```smalltalk\nPlease select a result:```\n```smalltalk\n'
-            count = 0
-            for e in t_dict['res']:
-                send_str += '{}. {} ({})\n'.format( count+1, t_dict['res'][count][0], t_dict['res'][count][1] )
-                count+=1
-            send_str+='```\n'
-            await sent.edit( content=send_str )
-            t = bt_timer( 10, bt_timer_cb, sent ) # 10 sec timeout...
-            return
-        
-        # dice roll
-        if ck_cmd( cmd, 'roll' ):
-            try:
-                temp = msg.content[ len( "!roll "):len(msg.content) ].split( 'd', 2 )
-                if len(temp) != 2:
-                    await msg.channel.send( '```Incorrect format. Try again with the following format: XdY.```' )
-                int( temp[0] )
-                int( temp[1] )
-            except:
-                await msg.channel.send( '```Incorrect format. Try again with the following format: XdY.```' )
-                return
-            output = []
-            for i in range( 0, int(temp[0]) ):
-                output.append( random.randint( 1, int(temp[1]) ) )
-            await msg.channel.send( '```Rolled {} {}-sided dice and got the following results: {}```'.format(
-                                    temp[0], temp[1], output ) )
-            return
-
-        # alt caps
-        if ck_cmd( cmd, 'alt' ):
-            try:
-                conv = msg.content[len( "!alt " ):len(msg.content)].upper()
-                count = 0
-                out = ''
-                for c in conv:
-                    if c not in string.ascii_letters:
-                        out+=c
-                        continue
-                    if count%2 == 1:
-                        out+=c
-                    else:
-                        out+=c.lower()
-                    count+=1
-
-                await msg.channel.send( '```{}```'.format( str(out ) ) )
-            except:
-                return
-            return
-client.run( discord_token )
+client.run(discord_token)

@@ -1,47 +1,213 @@
-import json, os, asyncio
+import json, os, asyncio, sqlite3, openai, re, ast
+from datetime import datetime
+from cb_guild import cb_guild as cb_guild
+import pdb
 
-# functions...
-def chk_pfx( msg, p ):
-    """check if msg content contains the given prefix"""
-    return msg[:len(p)] == p
+now = lambda : datetime.today().strftime('%Y-%m-%d') # YYYY-MM-DD
+dictify = lambda string: ast.literal_eval( string ) # turn a str thats a dict into an actual dict
 
-def get_pfx( msg, p ):
-    return msg[:len(p)]
+# these should not be globals...
+cmds = ['help','set','get']
+opts = ['prof_filter']
 
 def get_settings( file ):
     """Load file as a json and return it"""
     path = os.path.dirname( os.path.realpath( __file__ ))
-    with open( '{}/{}'.format(path,file) ) as f:
-        settings = json.load( f )
-    f.close()
-    return settings
-settings = get_settings( 'settings.json' )
-pfx = settings['bot']['prefix']
-
-import logging
-def setup_logs( file ):
-    """Setup logging"""
-    LOG_LEVEL = logging.DEBUG
-    path = '{}/var'.format( os.path.dirname( os.path.realpath( __file__ )) )
     try:
-        os.mkdir( path )
-    except FileExistsError:
-        # do nothing...
-        pass
-    l = logging.getLogger( 'craig-bot' )
-    l.setLevel( LOG_LEVEL )
-    fh = logging.FileHandler( '{}/bot.log'.format( path ) )
-    fh.setLevel( LOG_LEVEL )
-    f = logging.Formatter( '%(asctime)s - %(name)s - %(levelname)s - %(message)s' )
-    fh.setFormatter(f)
-    l.addHandler( fh )
-    return l
+        with open( '{}/{}'.format(path,file) ) as f:
+            settings = json.load( f )
+        f.close()
+        return settings
+    except FileNotFoundError as e:
+        print( "Settings file not found. Expecting: {}/settings.json", os.getwd() )
+        print( e )
+        return -1
 
-# inputs: term, token
-#   term (str) : a string to pass to the youtube API for searching
-#   token (str) : youtube api token
-# outputs: result
-#   result (tuple) : tuple comprised of a symbolic name, and an id
+prep_queries = [
+    "CREATE TABLE IF NOT EXISTS guilds(name,id,data,date_added)",
+    "CREATE TABLE IF NOT EXISTS oai_cmds(prompt,model,resp,uid,date)",
+    "CREATE TABLE IF NOT EXISTS flagged_msgs(username,user_id,guild,guild_id,content,score,date)"
+]
+def init_db(db_file):
+    """ Prep the sqlite file with our defined array of tables."""
+    res = []
+    try:
+        if not os.path.isfile(db_file):
+            con = sqlite3.connect( db_file )
+            cur = con.cursor()
+            for q in prep_queries:
+                res.append(cur.execute( q ))
+            con.commit()
+            con.close()
+        else:
+            raise RuntimeError("DB File already exists.")
+    except RuntimeError as e:
+        con = sqlite3.connect( db_file )
+        cur = con.cursor()
+        for q in prep_queries:
+            res.append(cur.execute( q ))
+        con.commit()
+        con.close()
+        return
+    except Exception as e:
+        return None
+    return res
+
+def _check_db( db_file ):
+    if not os.path.isfile( db_file ):
+        raise FileNotFoundError
+    else:
+        return sqlite3.connect( db_file )
+
+def check_guild( guild, db_file ):
+    """Check if a guild is logged in the sqlite db.
+    Returns a cb_guild object if it exists otherwise None"""
+    try:
+        db = _check_db( db_file )
+        q = "SELECT name,id,data FROM guilds WHERE guilds.id=\"{}\" AND guilds.name=\"{}\"".format( guild.id, guild.name )
+        cur = db.cursor()
+        res = cur.execute( q )
+        row = res.fetchone()
+        db.close()
+        data = dictify(row[2])
+        ret = cb_guild( row[1], data )
+        if row == None:
+            return None
+        else:
+            return ret
+    except FileNotFoundError as e:
+        print("No db file found! Expecting: {}/{}",os.getcwd(),db_file)
+        return None
+
+def insert_guild( guild, data=None, db_file="craig-bot.sqlite" ):
+    try:
+        db = _check_db( db_file )
+        cur = db.cursor()
+        if data is None:
+            data = {
+               "prof_filter":"False"
+            }
+        q = "INSERT INTO guilds VALUES(\"{}\",\"{}\",\"{}\",\"{}\")".format(guild.name,guild.id,data,now())
+        res = cur.execute( q )
+        db.commit()
+        db.close()
+        ret = cb_guild(guild.id,data)
+        return ret
+    except Exception as e:
+        db.rollback()
+        print(e)
+        return None
+        
+def _update_db( query, db_file ):
+    try:
+        db = _check_db( db_file )
+        cur = db.cursor()
+        res = cur.execute(q)
+        return res
+    except Exception as e:
+        return None
+
+def _strip_user_id( message_text ):
+    """Strip the Discord user ID from messages before passing to OpenAI.
+        discord.Message.content includes a username ex:
+            <@123457890> This is my message!
+        This function strips off the text between <> (inc.) and returns only the
+        actual message data."""
+    strip_user_regex=re.compile('\<[^)]*\>')
+    if not type(message_text) is str:
+        raise TypeError("Error when stripping Discord ID's. Expecting type str got: {}".format( type( message_text )))
+    else:
+        try:
+            ret = message_text[strip_user_regex.match(message_text).end()+1:len(message_text)]
+        except AttributeError as e:
+            raise RuntimeError("User ID sub-string not found in message text! Reccomend setting message text manually.")
+        return ret
+        
+def prompt_openai( in_text, openai_key, model="gpt-3.5-turbo", max_resp_len=200 ):
+    try: # if no id in message pass the raw message as input to chatgpt
+        prompt = _strip_user_id( in_text )
+    except RuntimeError as e:
+        prompt = in_text
+    try:
+        openai.api_key = openai_key
+        data = [
+            {"role": "assistant", "content": "limit the response to 200 characters or less".format(max_resp_len)},
+            {"role": "user", "content": "{}".format(prompt)}
+        ]    
+        response = openai.ChatCompletion.create(
+        model = model,
+        messages = data,
+        max_tokens = 256,
+        n = 1,
+        stop = None,
+        temperature = 0.5,
+        )
+        return response
+    except openai.error.InvalidRequestError as e:
+        print(e)
+        return None
+    
+# TODO implement this in the process for returning AI prompts
+def _log_ai_prompt( in_text, model, reply, user, db_file="craig-bot.sqlite", date=now(), ):
+    db_data = {
+            "prompt":in_text,
+            "model":model,
+            "resp":reply,
+            "uid":user,
+            "date":date,
+        }
+    try:
+        db = _check_db(db_file)
+        cur = db.cursor()
+        q = "INSERT INTO oai_cmds VALUES(\"{}\",\"{}\",\"{}\",\"{}\",\"{}\")".format(
+            db_data["prompt"],
+            db_data["model"],
+            db_data["resp"],
+            db_data['uid'],
+            db_data["date"])
+        res = cur.execute(q)
+        db.commit()
+        return res
+    except Exception as e:
+        db.rollback()
+        return None
+
+def print_help():
+    help_str = "Welcome to the new and improved Bee Sting bot!"\
+                "Now with OpenAI support! Simply mention the bot"\
+                " with an @ and ask it what you want to know." \
+                "For help with specific bot commands try !help commands."
+    # TODO implement better help dialogue
+    return help_str
+
+def get_cmd( opt ):
+    global cmds
+    for c in commands:
+        if opt[0:len(c)] == c:
+            return c
+    return None
+
+def get_opt( opt ):
+    global opts
+    trim = opt[len('get '):len(opt)]
+    for o in opts:
+        if trim[0:len(o)] == o:
+            return o
+    return None
+
+def set_opt( guild, opt, val, db_file="craig-bot.sqlite" ):
+    if opt == 'prof_filter':
+        if guild.data['prof_filter'] == val:
+            return val
+        else:
+            guild.data['prof_filter'] = val
+            q = "UPDATE guilds SET data=\"{}\" WHERE guild.id=\"{}\"".format(guild.data,guild.guild_id)
+            _update_db(q,db_file)
+            return guild.data['prof_filter']
+    else:
+        return None
+
+    
 from apiclient.discovery import build
 def yt_search( term, token ):
     """Return a list contains tuples with (title,id) for YT videos"""
@@ -57,42 +223,3 @@ def yt_search( term, token ):
             result.append( ( r['snippet']['title'], 
                             r['id']['videoId'] ) )
     return result
-
-import omdb
-def omdb_search( term, token, **kwargs ):
-    omdb.set_default( 'apikey', token )
-    """Return a list containing tuples of (film name, title, year, rating, id)"""
-    try:
-        res = omdb.search( term )
-        ret = []
-        count = 0
-        ok_types = ['movie','series','episode'] # ignore games, etc
-        for r in res:
-            if r['type'] in ok_types:
-                ret.append( ( r['title'], r['year'], r['imdb_id'] ) )
-                count+=1
-        if len(ret) <= 0:
-            return -1
-        else:
-            return ret
-    except:
-        print( "help!" )
-        return -1
-
-
-def ck_cmd( msg, cmd ):
-    """Checks if the first n characters of msg contain cmd. Should not contain the bot prefix when passed in.
-    msg: String to search in..
-    cmd: String to search for."""
-    return cmd in msg[0:len(cmd)]
-
-def help():
-    """Print help string...."""
-    path = os.path.dirname( os.path.realpath( __file__ ))
-    with open( '{}/help.json'.format( path ) ) as f:
-        help_strings = json.load( f )
-    f.close()
-    out_str = ''
-    for e in help_strings:
-        out_str+='{}\n'.format( help_strings[e].format( pfx ) )
-    return out_str
