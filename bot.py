@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import discord, openai # needed
 import asyncio, urllib3, sys, os, logging, random, string, json, sqlite3# maybe no longer needed
 from funcs import * # bot
