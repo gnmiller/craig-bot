@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 import discord
 from funcs import * # bot
 from cb_classes import cb_guild
-=======
-import discord, asyncio, urllib3, sys, os, logging, random, string
-from funcs import *
->>>>>>> dcb8e2755431b7f393fa7ddbe350149c5f63fa1c
 import pdb
 
 # settings
@@ -16,7 +11,6 @@ youtube_token = settings['youtube']['token']
 openai_token = settings['openai']['token']
 db_file = settings['bot']['db_file']
 
-<<<<<<< HEAD
 # need a better way to store/pass these around
 cmds = ['help','set','get','yt']
 opts = ['prof_filter']
@@ -25,16 +19,6 @@ opts = ['prof_filter']
 intents = discord.Intents( messages = True, presences = True, guilds = True, 
                           members = True, reactions = True, message_content = True )
 client = discord.Client(intents=intents)
-=======
-intents = discord.Intents.all()
-
-# this has never worked and i dont want to implement it
-#if not discord.opus.is_loaded():
-#    discord.opus.load_opus()
-urllib3.disable_warnings()
-
-client = discord.Client( intents=intents )
->>>>>>> dcb8e2755431b7f393fa7ddbe350149c5f63fa1c
 
 # setup slash commands NYI
 # tree = app_commands.CommandTree(client)
@@ -72,7 +56,6 @@ cmds = ['help','set','get','yt']
 opts = ['prof_filter']
 @client.event
 async def on_message( msg ):
-<<<<<<< HEAD
     global bot_id
     global guilds
     pinged = False
@@ -118,13 +101,6 @@ async def on_message( msg ):
                 return e
     
         if cmd == "yt":
-=======
-    # check if the message was trying to retrieve a search result and transmit it
-    for e in searches:
-        if ( msg.author == e['msg'].author 
-            and msg.channel == e['msg'].channel 
-            and msg.guild == e['msg'].guild ):
->>>>>>> dcb8e2755431b7f393fa7ddbe350149c5f63fa1c
             try:
                 cur_search = cur_guild.get_search( msg.author.id, cur_guild.guild_id )
             except RuntimeError as e:
@@ -169,7 +145,6 @@ async def on_message( msg ):
                         db_file )
             return ret
 
-<<<<<<< HEAD
     # @ mentions block
     try:
         for m in msg.mentions:
@@ -177,26 +152,6 @@ async def on_message( msg ):
                 pinged = True
             pinged = True
         if pinged == False:
-=======
-        # alt caps
-        if ck_cmd( cmd, 'alt' ):
-            try:
-                conv = msg.content[len( "!alt " ):len(msg.content)].upper()
-                count = 0
-                out = ''
-                for c in conv:
-                    if c not in string.ascii_letters:
-                        out+=c
-                        continue
-                    if count%2 == 0:
-                        out+=c
-                    else:
-                        out+=c.lower()
-                    count+=1
-                await msg.channel.send( '```{}```'.format( str(out ) ) )
-            except:
-                return
->>>>>>> dcb8e2755431b7f393fa7ddbe350149c5f63fa1c
             return
         else:
             # do bot stuff
