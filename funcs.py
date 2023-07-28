@@ -189,9 +189,8 @@ def get_cmd( opt ):
 
 def get_opt( opt ):
     global opts
-    trim = opt[len('get '):len(opt)]
     for o in opts:
-        if trim[0:len(o)] == o:
+        if opt[0:len(o)] == o:
             return o
     return None
 
@@ -207,6 +206,36 @@ def set_opt( guild, opt, val, db_file="craig-bot.sqlite" ):
     else:
         return None
 
+def do_cmd( cmd, opt, vals, guild, db_file="craig-bot.sqlite"):
+    try:
+        db = _check_db( db_file )
+    except Exception as e:
+        print("Fatal unexpected error when opening DB for commands.")
+        print(e)
+        exit( -1 )
+    vals = kwargs["vals"]
+    print("cmd: {}".format(cmd))
+    print("opt: {}".format(opt))
+    print("vals: {}".format(vals))
+    # skeleton for commands
+    # TODO all this crap
+    match cmd:
+        case 'get':
+            match opt:
+                case 'profanity_filter':
+                    return
+                case _:
+                    return None
+        case 'set':
+            match opt:
+                case 'profanity_filter':
+                    return
+                case _:
+                    return None
+        case 'help':
+            return "NYI -- Help String"
+        case _:
+            return None
     
 from apiclient.discovery import build
 def yt_search( term, token ):

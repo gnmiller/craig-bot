@@ -3,6 +3,7 @@ class cb_guild:
     data = { # just one for now but maybe more opts later
         "prof_filter":"False"
     }
+    search = []
     def __init__(self, gid, data):
         self.guild_id = gid
         if not data == None:

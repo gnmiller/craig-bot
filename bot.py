@@ -72,21 +72,23 @@ async def on_message( msg ):
                 await msg.channel.send("huh?")
             else:
                 # get commands
-                if cmd == 'get':
-                    opt = get_opt( text )
-                    if opt == 'prof_filter': # get prof_filter
-                        state = guilds[msg.guild.id].get_prof_filter()
-                        send_str = "Current Sever: {}\nProfanity Filter Status: {}\n".format(msg.guild.name,state)
-                
-                # set commands
-                elif cmd == 'set':
-                    opt = get_opt( text )
-                    if opt == 'prof_filter': # set prof_filter
-                        return None
-                    
-                # no command
-                else:
-                    return None
+                split_text = text.split()
+                opt = get_opt( split_text[1] )
+                vals = []
+                for i in range(2,len(split_text)):
+                    vals.append(i)
+                cmd_data = {
+                    "cmd":cmd,
+                    "guild":guilds[msg.guild.id],
+                    "opt":opt,
+                    "vals":vals
+                }
+                ret = do_cmd( cmd_data["cmd"], 
+                             cmd_data["opt"], 
+                             cmd_data["vals"], 
+                             cmd_data["guild"], 
+                             db_file )
+                return ret
     except Exception as e:
         return None
     
