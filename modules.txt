@@ -1,0 +1,6 @@
+discord
+json
+sqlite3
+openai
+google-api-python-client
+requests

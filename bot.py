@@ -1,8 +1,7 @@
-import discord, openai # needed
-import asyncio, urllib3, sys, os, logging, random, string, json, sqlite3# maybe no longer needed
+import discord
 from funcs import * # bot
-from cb_guild import cb_guild as cb_guild
-import pdb # remove in prod
+from cb_classes import cb_guild
+import pdb
 
 # settings
 settings = get_settings( 'settings.json' )
@@ -12,20 +11,21 @@ youtube_token = settings['youtube']['token']
 openai_token = settings['openai']['token']
 db_file = settings['bot']['db_file']
 
-# these should not be globals...
-cmds = ['help','set','get']
+# need a better way to store/pass these around
+cmds = ['help','set','get','yt']
 opts = ['prof_filter']
 
-# init bot and openai
-openai.api_key = openai_token
-intents = discord.Intents( messages = True, presences = True, guilds = True, members = True, reactions = True )
+# init
+intents = discord.Intents( messages = True, presences = True, guilds = True, 
+                          members = True, reactions = True, message_content = True )
 client = discord.Client(intents=intents)
 
 # setup slash commands NYI
 # tree = app_commands.CommandTree(client)
 
+# generate a URI for inviting the bot to a server.
 def invite_uri():
-    if settings == None:
+    if settings is None:
         raise FileNotFoundError("settings not loaded!")
     else:
         client_id = settings['discord']['app_id']
@@ -40,7 +40,6 @@ guilds = {}
 async def on_ready():
     global bot_id
     global guilds
-    print( "ready!" )
     init_db( db_file )
     bot_id = client.user.id
     for g in client.guilds:
@@ -51,50 +50,104 @@ async def on_ready():
         else: 
             continue
     print(invite_uri())
-    print("My Discord ID: {}".format(bot_id))
     return
 
+cmds = ['help','set','get','yt']
+opts = ['prof_filter']
 @client.event
 async def on_message( msg ):
     global bot_id
     global guilds
-    global cmds
-    global opts
     pinged = False
+    cmd = None
+    text = None
+    cur_guild = guilds[msg.guild.id]
+
+    # trying for search result
+    # TODO validate the user wanted to make a selection
+    # currently get_selection() doesnt care what you pass as the input
+    #   it either returns 1 (default) or int() of the input
+    try:
+        cur_search = cur_guild.get_search( msg.author.id, cur_guild.guild_id )
+    except Exception as e:
+        cur_search = None    
+    if not cur_search is None: # there is an active search
+        # validate the user and guild are the same as the requester
+        if msg.author.id == cur_search.get_uid() and msg.guild.id == int(cur_search.get_gid()):
+            select = get_selection(msg.content)
+            i = 0
+            for k,v in cur_search.data['search_results'].items():
+                i+=1
+                if i == select:
+                    my_id = k
+                    break
+            #sent_msg = getmsg(discord, cur_search.data['sent_msg'])
+            sent_msg = cur_search.data['sent_msg']
+            cur_guild.del_search( cur_search.get_uid(), cur_search.get_gid() )
+            await sent_msg.edit( yt_uri(my_id) )
+            return sent_msg
+        else:
+            # check if they tried to select
+            # print msg they are not allowed
+            return cur_search
 
     # prefix block
-    try:
-        if msg.content[0:len(pfx)] is pfx: # this is a command wake up!
-            text = msg.content[len(pfx)+2:len(msg.content)] # slice off the prefix
-            cmd = get_cmd( text )
-            if cmd is None:
-                await msg.channel.send("huh?")
-            else:
-                # get commands
-                split_text = text.split()
-                opt = get_opt( split_text[1] )
-                vals = []
-                for i in range(2,len(split_text)):
-                    vals.append(i)
+    if chk_pfx(msg.content, pfx): # this is a command wake up!
+        try:
+                text = slicer(msg.content,pfx) # slice off the prefix
+                cmd = get_cmd( text, cmds )
+                text = msg.content[len(pfx)+len(cmd)+1:len(msg.content)]
+        except Exception as e:
+                return e
+    
+        if cmd == "yt":
+            try:
+                cur_search = cur_guild.get_search( msg.author.id, cur_guild.guild_id )
+            except RuntimeError as e:
+                await msg.channel.send("```I think you have an existing search running. Try completing that first.```")
+            res = yt_search( text, youtube_token )
+            #res_str = search_results_printstr( res )
+            sent_msg = await msg.channel.send("```Performing YouTube Search please hold.```")
+            try:
+                s = cur_guild.add_search( "youtube", msg.author, text, res, sent_msg )
+                send_str = "Search Terms: {}\n" \
+                            "Search Results: \n"
+                index = 0
+                for k,v in res.items():
+                    index+=1
+                    send_str+="{}. {} -- {}\n".format(index,v,k)
+                await sent_msg.edit("```{}```".format(send_str))
+            except RuntimeError as e:
+                await sent_msg.edit("```Problem performing search.\n{}\n```".format(e))
+                s = cur_guild.del_search( msg.guild.id, msg.author.id ) # passing IDs direct from msg here to avoid issues
+                return s
+        elif cmd == "flush":
+            if msg.author.id == "147978461179281408":
+                cur_guild.flush()
+                return None
+        else:
+            # get commands
+            split_text = text.split()
+            opt = get_opt( split_text[1] )
+            vals = []
+            for i in range(2,len(split_text)):
+                vals.append(i)
                 cmd_data = {
                     "cmd":cmd,
                     "guild":guilds[msg.guild.id],
                     "opt":opt,
                     "vals":vals
                 }
-                ret = do_cmd( cmd_data["cmd"], 
-                             cmd_data["opt"], 
-                             cmd_data["vals"], 
-                             cmd_data["guild"], 
-                             db_file )
-                return ret
-    except Exception as e:
-        return None
-    
+            ret = do_cmd( cmd_data["cmd"], 
+                        cmd_data["opt"], 
+                        cmd_data["vals"], 
+                        cmd_data["guild"], 
+                        db_file )
+            return ret
+
     # @ mentions block
     try:
         for m in msg.mentions:
-            print("caught my ID setting pinged true")
             if m.id == bot_id:
                 pinged = True
             pinged = True
@@ -109,12 +162,13 @@ async def on_message( msg ):
                 # assume we want to query openAI
                 prompt = msg.content
                 msg_to_edit = await msg.channel.send("```Please hold while I commune with SkyNet.```")
-                oai_resp = prompt_openai( prompt, openai_token )
+                oai_resp = prompt_openai( prompt, msg.author, openai_token, db_file )
                 await msg_to_edit.edit("```"+str(oai_resp.choices[0].message.content+"```"))
                 return
         return None # catch all return
     except Exception as e:
-        return None
+        print(e)
+        return e
 
 @client.event
 async def on_guild_join( guild ):
@@ -128,5 +182,9 @@ async def on_guild_join( guild ):
     except FileNotFoundError as e:
         print(e)
         return None
+    
+async def getmsg( client, msg_id ):
+    msg = await client.fetch_message(msg_id)
+    return msg
 
 client.run(discord_token)

@@ -1,0 +1,36 @@
+{
+    "discord":
+    {
+		"token":"DISCORD TOKEN (Dev Portal -> Bot -> Token)",
+        "app_id":"DISCORD APP ID",
+		"client_id":"DISCORD API SECRET",
+        "secret":"DISCORD API SECRET"
+    },
+    "youtube":
+    {
+        "token":"YOUTUBE API KEY"
+    },
+    "tmdb":
+    {
+        "token":"TMDBv3 API KEY"
+    },
+	"imgur":
+	{
+		"token":"APP TOKEN",
+		"secret":"APP SECRET",
+        "access":"APP ACCESS KEY",
+        "refresh":"APP REFRESH KEY"
+	},
+    "openai":
+    {
+        "token":"OPENAI API KEY"
+    },
+    "bot":
+    {
+        "prefix":"!",
+        "db_file":"craig-bot.sqlite",
+        "app_id":"DISCORD APP ID",
+        "min_perms":"MIN PERMS REQUIRED FOR BOT", # NYI
+        "perms":"48914845007590" # preferred perms for bot
+    }
+}

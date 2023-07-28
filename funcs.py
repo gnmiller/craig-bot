@@ -1,13 +1,15 @@
-import json, os, asyncio, sqlite3, openai, re, ast
+import json, os, sqlite3, openai, re, ast, apiclient
+from urllib.error import HTTPError
 from datetime import datetime
-from cb_guild import cb_guild as cb_guild
-import pdb
+from collections import OrderedDict
+from cb_classes import cb_guild
 
 now = lambda : datetime.today().strftime('%Y-%m-%d') # YYYY-MM-DD
 dictify = lambda string: ast.literal_eval( string ) # turn a str thats a dict into an actual dict
+yt_uri = lambda string: "https://www.youtube.com/watch?v={}".format( string )
 
-# these should not be globals...
-cmds = ['help','set','get']
+# need a better way to store/pass these around
+cmds = ['help','set','get','yt']
 opts = ['prof_filter']
 
 def get_settings( file ):
@@ -23,6 +25,7 @@ def get_settings( file ):
         print( e )
         return -1
 
+# put this in a file?
 prep_queries = [
     "CREATE TABLE IF NOT EXISTS guilds(name,id,data,date_added)",
     "CREATE TABLE IF NOT EXISTS oai_cmds(prompt,model,resp,uid,date)",
@@ -70,7 +73,7 @@ def check_guild( guild, db_file ):
         row = res.fetchone()
         db.close()
         data = dictify(row[2])
-        ret = cb_guild( row[1], data )
+        ret = cb_guild( int(row[1]), data )
         if row == None:
             return None
         else:
@@ -91,10 +94,11 @@ def insert_guild( guild, data=None, db_file="craig-bot.sqlite" ):
         res = cur.execute( q )
         db.commit()
         db.close()
-        ret = cb_guild(guild.id,data)
+        ret = cb_guild(int(guild.id),data)
         return ret
     except Exception as e:
         db.rollback()
+        db.close()
         print(e)
         return None
         
@@ -102,10 +106,12 @@ def _update_db( query, db_file ):
     try:
         db = _check_db( db_file )
         cur = db.cursor()
-        res = cur.execute(q)
+        res = cur.execute(query)
         return res
     except Exception as e:
-        return None
+        db.rollback()
+        db.close()
+        return e
 
 def _strip_user_id( message_text ):
     """Strip the Discord user ID from messages before passing to OpenAI.
@@ -123,7 +129,7 @@ def _strip_user_id( message_text ):
             raise RuntimeError("User ID sub-string not found in message text! Reccomend setting message text manually.")
         return ret
         
-def prompt_openai( in_text, openai_key, model="gpt-3.5-turbo", max_resp_len=200 ):
+def prompt_openai( in_text, openai_key, user, model="gpt-3.5-turbo", max_resp_len=200, db_file="craig-bot.sqlite" ):
     try: # if no id in message pass the raw message as input to chatgpt
         prompt = _strip_user_id( in_text )
     except RuntimeError as e:
@@ -142,11 +148,12 @@ def prompt_openai( in_text, openai_key, model="gpt-3.5-turbo", max_resp_len=200 
         stop = None,
         temperature = 0.5,
         )
+        _log_ai_prompt( in_text, model, response, user.id, db_file, now() )
         return response
     except openai.error.InvalidRequestError as e:
         print(e)
         return None
-    
+  
 # TODO implement this in the process for returning AI prompts
 def _log_ai_prompt( in_text, model, reply, user, db_file="craig-bot.sqlite", date=now(), ):
     db_data = {
@@ -180,15 +187,18 @@ def print_help():
     # TODO implement better help dialogue
     return help_str
 
-def get_cmd( opt ):
-    global cmds
-    for c in commands:
+# check txt for pfx
+def chk_pfx( txt, pfx ):
+    rel = txt[0:len(pfx)]
+    return rel == pfx
+
+def get_cmd( opt, cmds=['help','set','get'] ):
+    for c in cmds:
         if opt[0:len(c)] == c:
             return c
     return None
 
-def get_opt( opt ):
-    global opts
+def get_opt( opt, opts=['prof_filter'] ):
     for o in opts:
         if opt[0:len(o)] == o:
             return o
@@ -213,7 +223,6 @@ def do_cmd( cmd, opt, vals, guild, db_file="craig-bot.sqlite"):
         print("Fatal unexpected error when opening DB for commands.")
         print(e)
         exit( -1 )
-    vals = kwargs["vals"]
     print("cmd: {}".format(cmd))
     print("opt: {}".format(opt))
     print("vals: {}".format(vals))
@@ -236,19 +245,47 @@ def do_cmd( cmd, opt, vals, guild, db_file="craig-bot.sqlite"):
             return "NYI -- Help String"
         case _:
             return None
-    
-from apiclient.discovery import build
-def yt_search( term, token ):
-    """Return a list contains tuples with (title,id) for YT videos"""
+        
+# always returns 1 if it catches an error
+def get_selection( text ):
     try:
-        yt = build( 'youtube', 'v3', developerKey=token )
-        resp = yt.search().list( q=term, part='id,snippet', maxResults=10 ).execute()
-    except HttpError:
-        print( 'oops' )
-        return
-    result = []
+        v = int(text[0:1])
+    except ValueError as e:
+        v = 1
+    return v
+        
+# slice off the prefix from a string
+def slicer( text, pfx ):
+    if len(pfx) > len(text):
+        raise RuntimeError("pfx longer than string!")
+    else:
+        return text[len(pfx):len(text)]
+
+# return a dict of video_id:title for search results
+def yt_search( parms, yt_api_key ):
+    try:
+        yt = apiclient.discovery.build( 'youtube', 'v3', developerKey=yt_api_key )
+        resp = yt.search().list( q=parms, part='id,snippet', maxResults=10 ).execute()
+    except HTTPError as e:
+        print( "Error connecting to YouTube API -- {}".format(e) )
+        return e
+    result = OrderedDict()
     for r in resp.get( 'items', [] ):
         if r['id']['kind'] == 'youtube#video':
-            result.append( ( r['snippet']['title'], 
-                            r['id']['videoId'] ) )
+            vid_id = r['id']['videoId']
+            title = r['snippet']['title'].replace('&quot;','"')
+            result[vid_id]=title
     return result
+
+# unused
+def search_results_printstr( result ):
+    if not type(result) == dict:
+        raise TypeError("Invalid data type passed as result. Expecting dict got {}".format(type(result)))
+    pstr = []
+    index = 1
+    for k,v in result.items():
+        if not index == 10:
+            pstr.append("{}. {} -- ({})\n".format(index,v,k))
+        else: 
+            pstr.append("{}. {} -- ({})".format(index,v,k))
+    return pstr
