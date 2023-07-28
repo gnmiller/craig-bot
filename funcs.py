@@ -277,6 +277,7 @@ def yt_search( parms, yt_api_key ):
             result[vid_id]=title
     return result
 
+<<<<<<< HEAD
 # unused
 def search_results_printstr( result ):
     if not type(result) == dict:
@@ -289,3 +290,21 @@ def search_results_printstr( result ):
         else: 
             pstr.append("{}. {} -- ({})".format(index,v,k))
     return pstr
+=======
+def ck_cmd( msg, cmd ):
+    """Checks if the first n characters of msg contain cmd. Should not contain the bot prefix when passed in.
+    msg: String to search in..
+    cmd: String to search for."""
+    return cmd in msg[0:len(cmd)]
+
+def help():
+    """Print help string...."""
+    path = os.path.dirname( os.path.realpath( __file__ ))
+    with open( '{}/help.json'.format( path ) ) as f:
+        help_strings = json.load( f )
+    f.close()
+    out_str = ''
+    for e in help_strings:
+        out_str+='{}\n'.format( help_strings[e].format( pfx ) )
+    return out_str
+>>>>>>> dcb8e2755431b7f393fa7ddbe350149c5f63fa1c

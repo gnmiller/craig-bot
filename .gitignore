@@ -4,7 +4,6 @@ settings.json
 *swp
 *.log
 __pycache__
-*.orig
 *.log
 var/
 .vscode
