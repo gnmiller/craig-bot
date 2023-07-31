@@ -55,12 +55,13 @@ async def on_ready():
     init_db( db_file )
     bot_id = bot.user.id
     for g in bot.guilds:
+        await g.me.edit(nick="BeeStingBot2.0")
         t_guild = check_guild( g, db_file )
         if not t_guild:
             t_guild = insert_guild( g, data=None, db_file=db_file )
         guilds[t_guild.guild_id] = t_guild
     print(invite_uri())
-    bot.global_name = "BeeStingBot2.0"
+    bot.user.global_name="BeeStingBot2.0"
     return
 
 cmds = ['help','set','get','yt']
