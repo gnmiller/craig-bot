@@ -1,10 +1,8 @@
 import discord, logging
 from funcs import * # bot
 from discord.ext import commands
-from discord.commands import Option
 from cb_classes import cb_guild
 from math import ceil
-import pdb
 
 # settings
 settings = get_settings( 'settings.json' )
