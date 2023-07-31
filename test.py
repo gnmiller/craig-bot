@@ -12,23 +12,24 @@ data = [
             {"role": "assistant", "content": "limit the response to 200 characters or less"},
             {"role": "user", "content": "tell me about python"}
         ]
-# response = openai.ChatCompletion.create( # Change this
-#         model = model, # Change this
-#         messages = data,
-#         max_tokens = 256,
-#         n = 1,
-#         stop = None,
-#         temperature = 0.5,
-#         )
+response = openai.ChatCompletion.create( # Change this
+        model = model, # Change this
+        messages = data,
+        max_tokens = 256,
+        n = 1,
+        stop = None,
+        temperature = 0.5,
+        )
+print(response)
 
-users = ["<@49832143829> other text","<@89438924> this would be a message","<@324132193102> i like turtles", "no user id here", "<@9302139201> another message"]
-strip_user_regex=re.compile('\<[^)]*\>')
-for u in users:
-    try:
-        print( funcs._strip_user_id( u ) )
-    except Exception as e:
-        print( u )
-        continue
+# users = ["<@49832143829> other text","<@89438924> this would be a message","<@324132193102> i like turtles", "no user id here", "<@9302139201> another message"]
+# strip_user_regex=re.compile('\<[^)]*\>')
+# for u in users:
+#     try:
+#         print( funcs._strip_user_id( u ) )
+#     except Exception as e:
+#         print( u )
+#         continue
 
 # output = []
 # for u in users:
