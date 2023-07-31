@@ -59,7 +59,6 @@ async def on_ready():
             t_guild = insert_guild( g, data=None, db_file=db_file )
         guilds[t_guild.guild_id] = t_guild
     print(invite_uri())
-    bot.user.global_name="BeeStingBot2.0"
     return
 
 cmds = ['help','set','get','yt']

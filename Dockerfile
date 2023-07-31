@@ -6,5 +6,4 @@ RUN git config --global --add safe.directory /opt/craig-bot/
 RUN git clone https://github.com/gnmiller/craig-bot.git /opt/craig-bot
 COPY ./settings.json /opt/craig-bot/settings.json
 COPY ./craig-bot.sqlite /opt/craig-bot/craig-bot.sqlite
-RUN cd /opt/craig-bot/
 CMD ["sh"]
