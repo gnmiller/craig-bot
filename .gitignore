@@ -8,3 +8,4 @@ __pycache__
 var/
 .vscode
 *.sqlite
+roadmap.*

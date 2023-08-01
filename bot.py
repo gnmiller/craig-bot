@@ -1,4 +1,5 @@
-import discord, logging
+import discord, logging, asyncio, config
+import cb_youtube
 from funcs import * # bot
 from discord.ext import commands
 from cb_classes import cb_guild
@@ -12,10 +13,6 @@ youtube_token = settings['youtube']['token']
 openai_token = settings['openai']['token']
 db_file = settings['bot']['db_file']
 logfile = settings['bot']['logfile']
-
-# need a better way to store/pass these around
-cmds = ['help','set','get','yt']
-opts = ['prof_filter']
 
 # init
 intents = discord.Intents( messages = True, presences = True, guilds = True, 
@@ -44,34 +41,28 @@ def invite_uri():
         ret = "https://discord.com/api/oauth2/authorize?client_id={}&permissions={}&scope={}".format(client_id,permissions,scope)
         return ret
 
-bot_id = None
-guilds = {}
 @bot.event
 async def on_ready():
-    global bot_id
-    global guilds
     init_db( db_file )
-    bot_id = bot.user.id
+    config.bot_id = bot.user.id
     for g in bot.guilds:
         await g.me.edit(nick="BeeStingBot2.0")
         t_guild = check_guild( g, db_file )
         if not t_guild:
             t_guild = insert_guild( g, data=None, db_file=db_file )
-        guilds[t_guild.guild_id] = t_guild
+        config.guilds[t_guild.guild_id] = t_guild
     print(invite_uri())
     return
 
-cmds = ['help','set','get','yt']
-opts = ['prof_filter']
 @bot.event
 async def on_message( msg ):
-    global bot_id
-    global guilds
     pinged = False
     # @ mentions block
+    if msg.author.id == config.bot_id:
+        return # dont respond to self
     try:
         for m in msg.mentions:
-            if m.id == bot_id:
+            if m.id == config.bot_id:
                 pinged = True
             pinged = True
         if pinged == False:
@@ -106,48 +97,6 @@ async def getmsg( client, msg_id ):
     msg = await client.fetch_message(msg_id)
     return msg
 
-@bot.command(
-        help = "Search for a YouTube video with the message as the search terms.",
-        brief = "Search YouTube"
-)
-async def yt(ctx, *, message):
-    cur_guild = guilds[ctx.guild.id]
-    try:
-        cur_search = cur_guild.get_search( ctx.author.id, cur_guild.guild_id )
-    except RuntimeError as e:
-        await ctx.send("```I think you have an existing search running. Try completing that first.```")
-        return cur_search
-    res = yt_search( message, youtube_token )
-    #res_str = search_results_printstr( res )
-    import pdb
-    pdb.set_trace()
-    sent_msg = await ctx.send("```Performing YouTube Search please hold.```")
-    try:
-        s = cur_guild.add_search( "youtube", ctx.author, message, res, sent_msg )
-        send_str = "Search Terms: {}\n" \
-                    "Search Results: \n"
-        index = 0
-        for k,v in res.items():
-            index+=1
-            send_str+="{}. {} -- {}\n".format(index,v,k)
-        await sent_msg.edit("```{}```".format(send_str))
-        pick = await bot.wait_for('message', # wait for message from same guild & author
-                                     check= lambda message: message.author == ctx.author
-                                                        and message.guild == ctx.guild)
-        select = get_selection(pick.content)
-        i = 0
-        for k,v in s.data['search_results'].items():
-            i+=1
-            if i == select:
-                cur_guild.del_search( s.get_uid(), s.get_gid() )
-                await sent_msg.edit( yt_uri(k) )
-                return s
-        
-    except RuntimeError as e:
-        await sent_msg.edit("```Problem performing search.\n{}\n```".format(e))
-        s = cur_guild.del_search( ctx.guild.id, ctx.author.id ) # passing IDs direct from msg here to avoid issues
-        return s
-    
 @bot.command(
     help = "Prompt OpenAI for a response. A response limit can be specified. If none is given" \
             "The bot will assume 200 or less characters in the response to help avoid API limits." \
@@ -193,7 +142,7 @@ async def openai(ctx, *, message):
     oai_resp = prompt_openai( in_text=prompt, user=ctx.author,
                                 openai_key=openai_token, model=model,
                                 max_resp_len=length, db_file=db_file )
-    await msg_to_edit.edit("```"+str(oai_resp.choices[0].message.content+"```"))
+    await msg_to_edit.edit(content="```"+str(oai_resp.choices[0].message.content+"```"))
     return None
 
 @bot.command(
@@ -221,6 +170,12 @@ async def roll(ctx, dice="1d20"):
         send_str+="\nAverage: {}".format(cb_avg(rolls))
     send_str+="```"
     send_str = send_str.format(num_d,s,num_s,[x[1] for x in rolls])
-    await sent_msg.edit(send_str)
+    await sent_msg.edit(content=send_str)
 
+@bot.command()
+@commands.is_owner()
+async def shutdown(ctx):
+    await ctx.bot.logout()
+
+bot.add_cog(cb_youtube.CB_youtube(bot, youtube_token, config.guilds, None))
 bot.run(discord_token)

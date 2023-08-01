@@ -1,4 +1,7 @@
 from discord import Member, Message
+import config, asyncio
+import pdb
+
 class cb_guild:
     guild_id = None
     data = { # just one for now but maybe more opts later
@@ -18,19 +21,28 @@ class cb_guild:
         return bool(self.data["prof_filter"])
     
     # expects a discord.User object as user
-    def add_search( self, engine, user, parms, results, msg ):
-        if not type(user) == Member:
-            raise TypeError("Non-user object passed. Expected discord.User object got: {}".format(type(user)))
+    async def add_search( self, engine, user, guild, channel, parms, results, msg, search_arr ):
+        """Adds a search object to the internal list of searches for this guild object.
+        Engine(string): The API that this search object will search.
+        User(int): Discord user id that sent the message
+        Guild(int): Discord guild ID the search came from
+        Channel(int): Discord channel ID the search came from"""
         if not type(msg) == Message:
             raise TypeError("Non-Message passed as message. Expecting discord.Message got: {}".format(type(msg)))
         for s in self.search:
-            if s.get_uid() == user.id and s.get_gid() == self.guild_id:
+            if s.get_uid() == user and s.get_gid() == guild and s.get_channel == channel:
                 raise RuntimeError("This user already has an on-going search!")
-        new_search = _cb_search( engine, user, self.guild_id, parms, results, msg )
+        new_search = _cb_search( engine, user, guild, channel, parms, results, msg, search_arr )
+        print("add search user: {} guild: {} chan: {}".format( user, guild, channel ))
         self.search.append(new_search)
+        for s in self.search:
+            print(s.data)
+        print(len(self.search))
         return new_search
 
-    def get_search( self, uid, gid ):
+    async def get_search( self, uid, gid, cid ):
+        """Return a cb_search object that matches the gived user id (uid), guild id (gid) and channel id (cid)
+        If none is found throws a RuntimeError"""
         try:
             if len(self.search) == 0:
                 raise RuntimeError("No searches for this guild!")
@@ -40,15 +52,19 @@ class cb_guild:
                 print("unhandled exception in get_search()")
                 return e
         for s in self.search:
-            if s.get_uid() == uid and s.get_gid() == gid:
+            if s.get_uid() == uid and s.get_gid() == gid and s.get_channel() == cid:
                 return s
-        
+        raise RuntimeError("No searches for this guild!")
+ 
+    def my_search(self):
+        return self.search    
             
-    def del_search( self, uid, gid ):
+    async def del_search( self, user, guild, channel ):
         for s in self.search:
-            if s.get_uid() == uid and s.get_gid() == gid:
+            if s.get_uid() == user and s.get_gid() == guild and s.get_channel() == channel:
                 try:
                     self.search.remove(s)
+                    print( "del search user: {} guild {} channel {}".format( user,guild,channel ))
                     return s
                 except ValueError as e:
                     print("value was not in list")
@@ -65,12 +81,12 @@ class cb_guild:
     
 class _cb_search:
     data = {}
-    def __init__( self, engine, author, guild_id, 
-                 search_parms, search_results, sent_msg ):
+    def __init__( self, engine, author, guild_id, channel,
+                 search_parms, search_results, sent_msg, search_arr ):
         self.data['engine'] = engine
-        self.data['user'] = author.name
-        self.data['uid'] = author.id
+        self.data['uid'] = author
         self.data['gid'] = guild_id
+        self.data['cid'] = channel
         self.data['parms'] = search_parms
         self.data['search_results'] = search_results
         self.data['sent_msg'] = sent_msg
@@ -86,4 +102,8 @@ class _cb_search:
 
     def get_parms(self):
         return self.data['parms']
+    
+    def get_channel(self):
+        return self.data['cid']
+    
 

@@ -8,10 +8,6 @@ now = lambda : datetime.today().strftime('%Y-%m-%d') # YYYY-MM-DD
 dictify = lambda string: ast.literal_eval( string ) # turn a str thats a dict into an actual dict
 yt_uri = lambda string: "https://www.youtube.com/watch?v={}".format( string )
 
-# need a better way to store/pass these around
-cmds = ['help','set','get','yt']
-opts = ['prof_filter']
-
 def get_settings( file ):
     """Load file as a json and return it"""
     path = os.path.dirname( os.path.realpath( __file__ ))
@@ -135,6 +131,7 @@ def strip_user_id( message_text ):
         except AttributeError as e:
             raise RuntimeError("User ID sub-string not found in message text! Reccomend setting message text manually.")
         return ret
+    
  
 def prompt_openai( in_text, user, openai_key, model="gpt-3.5-turbo", max_resp_len=200, db_file="craig-bot.sqlite" ):
     """Interact with OpenAI's API."""
@@ -204,21 +201,6 @@ def slicer( text, pfx ):
     else:
         return text[len(pfx):len(text)]
 
-# return a dict of video_id:title for search results
-def yt_search( parms, yt_api_key ):
-    try:
-        yt = apiclient.discovery.build( 'youtube', 'v3', developerKey=yt_api_key )
-        resp = yt.search().list( q=parms, part='id,snippet', maxResults=10 ).execute()
-    except HTTPError as e:
-        print( "Error connecting to YouTube API -- {}".format(e) )
-        return e
-    result = OrderedDict()
-    for r in resp.get( 'items', [] ):
-        if r['id']['kind'] == 'youtube#video':
-            vid_id = r['id']['videoId']
-            title = r['snippet']['title'].replace('&quot;','"')
-            result[vid_id]=title
-    return result
 
 def cb_roll(rollc, sides, db_file="craig-bot.sql"):
     """Rolls a b-sided die a times.
