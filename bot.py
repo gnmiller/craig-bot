@@ -1,5 +1,5 @@
 import discord, logging, asyncio, config
-import cb_youtube
+import cb_youtube, cb_admin
 from funcs import * # bot
 from discord.ext import commands
 from cb_classes import cb_guild
@@ -177,5 +177,6 @@ async def roll(ctx, dice="1d20"):
 async def shutdown(ctx):
     await ctx.bot.logout()
 
-bot.add_cog(cb_youtube.CB_youtube(bot, youtube_token, config.guilds, None))
+bot.add_cog(cb_youtube.cb_youtube(bot, youtube_token, None))
+bot.add_cog(cb_admin.cb_admin(bot))
 bot.run(discord_token)

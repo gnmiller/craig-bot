@@ -4,6 +4,8 @@ from datetime import datetime
 from collections import OrderedDict
 from cb_classes import cb_guild
 
+import pdb
+
 now = lambda : datetime.today().strftime('%Y-%m-%d') # YYYY-MM-DD
 dictify = lambda string: ast.literal_eval( string ) # turn a str thats a dict into an actual dict
 yt_uri = lambda string: "https://www.youtube.com/watch?v={}".format( string )
@@ -27,6 +29,8 @@ prep_queries = [
     "CREATE TABLE IF NOT EXISTS oai_cmds(prompt,model,resp,uid,date)",
     "CREATE TABLE IF NOT EXISTS flagged_msgs(username,user_id,guild,guild_id,content,score,date)",
     "CREATE TABLE IF NOT EXISTS rolls(id INTEGER PRIMARY KEY,num_sides,result)",
+    "CREATE TABLE IF NOT EXISTS admin_users(id INTEGER PRIMARY KEY,user_id,guild_id,role)",
+    "CREATE TABLE IF NOT EXISTS admin_groups(id INTEGER PRIMARY KEY,group_id,guild_id,role)"
 ]
 def init_db(db_file):
     """ Prep the sqlite file with our defined array of tables."""
@@ -59,7 +63,7 @@ def _check_db( db_file ):
     else:
         return sqlite3.connect( db_file )
 
-def check_guild( guild, db_file ):
+def check_guild( guild, db_file="craig-bot.sqlite" ):
     """Check if a guild is logged in the local DB.
     Returns a cb_guild object if it exists otherwise None"""
     try:
@@ -72,7 +76,11 @@ def check_guild( guild, db_file ):
         if row == None:
             return None
         data = dictify(row[2])
-        ret = cb_guild( int(row[1]), data )
+        admin_data = _get_admins( guild, db_file )
+        if not guild.owner.id in admin_data[0]:
+            admin_data[0].append(guild.owner.id)
+        _insert_admin_user(guild.owner,guild,db_file=db_file)
+        ret = cb_guild( int(row[1]), admin_data[0], admin_data[1], data )
         if row == None:
             return None
         else:
@@ -80,6 +88,56 @@ def check_guild( guild, db_file ):
     except FileNotFoundError as e:
         print("No db file found! Expecting: {}/{}",os.getcwd(),db_file)
         return None
+    
+def _get_admins( guild, db_file="craig-bot.sqlite" ):
+    """Return a tuple of 2 lists. [0] refers to admin users, [1] refers to admin groups"""
+    auq = "SELECT user_id,guild_id FROM admin_users WHERE admin_users.guild_id=\"{}\"".format(guild.id)
+    agq = "SELECT group_id,guild_id FROM admin_groups WHERE admin_groups.guild_id=\"{}\"".format(guild.id)
+    try:
+        db = _check_db( db_file )
+        cur = db.cursor()
+        aurows = cur.execute(auq)
+        agrows = cur.execute(agq)
+        admin_users = []
+        admin_groups = []
+        for u in aurows:
+            admin_users.append(u)
+        for g in agrows:
+            admin_groups.append(g)
+        db.close()
+        return(admin_users,admin_groups)
+    except FileNotFoundError as e:
+        print("No db file found! Expecting: {}/{}",os.getcwd(),db_file)
+        return None
+
+def _check_admin( guild, user, db_file="craig-bot.sqlite" ):
+    admin_data = _get_admins( guild, db_file )
+    if user.id in admin_data[0]:
+        return True
+    for g in user.roles:
+        if g.id in admin_data[1]:
+            return True
+    return False
+
+def _insert_admin_user( user, guild, role="admin", db_file="craig-bot.sqlite" ):
+    try:
+        db = _check_db( db_file )
+    except FileNotFoundError as e:
+        return e
+    if not _check_admin( user, guild, db_file ):
+        q = "INSERT INTO admin_users (user_id,guild_id,role) VALUES (\"{}\",\"{}\",\"{}\")".format(
+                                                        user.id,
+                                                        guild.id,
+                                                        role
+        )
+    try:
+        cur = db.cursor()
+        res = cur.execute(q)
+        db.commit()
+        db.close()
+        return res
+    except Exception as e:
+        return e    
 
 def insert_guild( guild, data=None, db_file="craig-bot.sqlite" ):
     """Insert a new guild (server) into the local DB"""
@@ -94,7 +152,9 @@ def insert_guild( guild, data=None, db_file="craig-bot.sqlite" ):
         res = cur.execute( q )
         db.commit()
         db.close()
-        ret = cb_guild(int(guild.id),data)
+        ret = cb_guild(int(guild.id),[int(guild.owner.id)],[],data)
+        if not _check_admin( guild.owner, guild, db_file ):
+            _insert_admin_user(guild.owner, guild, db_file=db_file)
         return ret
     except Exception as e:
         db.rollback()
@@ -132,7 +192,6 @@ def strip_user_id( message_text ):
             raise RuntimeError("User ID sub-string not found in message text! Reccomend setting message text manually.")
         return ret
     
- 
 def prompt_openai( in_text, user, openai_key, model="gpt-3.5-turbo", max_resp_len=200, db_file="craig-bot.sqlite" ):
     """Interact with OpenAI's API."""
     try: # if no id in message pass the raw message as input to chatgpt

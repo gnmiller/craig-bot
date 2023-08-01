@@ -7,11 +7,26 @@ class cb_guild:
     data = { # just one for now but maybe more opts later
         "prof_filter":"False"
     }
+    
     search = []
-    def __init__(self, gid, data):
+    admin_users = []
+    admin_groups = []
+
+    def __init__(self, gid, admin_users, admin_groups, data):
         self.guild_id = gid
+        if not type(admin_users) is list or not type(admin_groups) is list:
+            raise TypeError("Did not get valid list of admin users or groups!")
+        for u in admin_users:
+            self.admin_users.append(u)
+        for g in admin_groups:
+            self.admin_groups.append(g)
         if not data == None:
             self.data = data
+
+    def auth_user( self, user, guild, db_file="craig-bot.sqlite"):
+        self.admin_users.append(user.id)
+        # TODO write out to DB
+        return
 
     def set_prof_filter( self, opt ):
         self.data["prof_filter"] = str(bool(opt))
@@ -21,7 +36,7 @@ class cb_guild:
         return bool(self.data["prof_filter"])
     
     # expects a discord.User object as user
-    async def add_search( self, engine, user, guild, channel, parms, results, msg, search_arr ):
+    async def add_search( self, engine, user, guild, channel, parms, results, msg ):
         """Adds a search object to the internal list of searches for this guild object.
         Engine(string): The API that this search object will search.
         User(int): Discord user id that sent the message
@@ -32,12 +47,8 @@ class cb_guild:
         for s in self.search:
             if s.get_uid() == user and s.get_gid() == guild and s.get_channel == channel:
                 raise RuntimeError("This user already has an on-going search!")
-        new_search = _cb_search( engine, user, guild, channel, parms, results, msg, search_arr )
-        print("add search user: {} guild: {} chan: {}".format( user, guild, channel ))
+        new_search = _cb_search( engine, user, guild, channel, parms, results, msg )
         self.search.append(new_search)
-        for s in self.search:
-            print(s.data)
-        print(len(self.search))
         return new_search
 
     async def get_search( self, uid, gid, cid ):
@@ -82,7 +93,7 @@ class cb_guild:
 class _cb_search:
     data = {}
     def __init__( self, engine, author, guild_id, channel,
-                 search_parms, search_results, sent_msg, search_arr ):
+                 search_parms, search_results, sent_msg ):
         self.data['engine'] = engine
         self.data['uid'] = author
         self.data['gid'] = guild_id

@@ -3,8 +3,8 @@ from discord.ext import commands
 from funcs import *
 import pdb
 
-class CB_youtube(commands.Cog):
-    def __init__(self,bot,api_key, guilds, search=None):
+class cb_youtube(commands.Cog):
+    def __init__(self,bot,api_key,search=None):
         self.bot = bot
         self.search = search
         self.api_key = api_key
@@ -38,8 +38,7 @@ class CB_youtube(commands.Cog):
                                 ctx.channel.id, 
                                 message, 
                                 res, 
-                                sent_msg, 
-                                search_arr )
+                                sent_msg )
             send_str = "Search Terms: {}\n" \
                         "Search Results: \n".format(message)
             # build string of results
