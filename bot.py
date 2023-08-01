@@ -119,6 +119,8 @@ async def yt(ctx, *, message):
         return cur_search
     res = yt_search( message, youtube_token )
     #res_str = search_results_printstr( res )
+    import pdb
+    pdb.set_trace()
     sent_msg = await ctx.send("```Performing YouTube Search please hold.```")
     try:
         s = cur_guild.add_search( "youtube", ctx.author, message, res, sent_msg )
@@ -208,8 +210,8 @@ async def roll(ctx, dice="1d20"):
     except Exception as e:
         num_d=1
         num_s=20
-    num_d = ceil(num_d,50)
-    num_s = ceil(num_s,100)
+    num_d = min(num_d,50)
+    num_s = min(num_s,100)
     rolls = cb_roll(int(num_d),int(num_s), db_file)
     if num_d == 1:
         await sent_msg.edit("```You rolled {0} {1} with {2} sides.\nResults: {3}```".format(
