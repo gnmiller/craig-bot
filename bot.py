@@ -213,20 +213,14 @@ async def roll(ctx, dice="1d20"):
     num_d = min(num_d,50)
     num_s = min(num_s,100)
     rolls = cb_roll(int(num_d),int(num_s), db_file)
+    send_str = "```You rolled {count} {q} with {sides} sides.\nResults: {res}```"
     if num_d == 1:
-        await sent_msg.edit("```You rolled {0} {1} with {2} sides.\nResults: {3}```".format(
-        num_d,
-        "die",
-        num_s,
-        [x[1] for x in rolls]
-    ))
+        s = "die"
     else:
-        await sent_msg.edit("```You rolled {0} {1} with {2} sides.\nResults: {3}\nAverage: {4}```".format(
-        num_d,
-        "dice",
-        num_s,
-        [x[1] for x in rolls],
-        cb_avg(rolls)
-    ))
+        s = "dice"
+        send_str+="\nAverage: {avg}".format(cb_avg(rolls))
+    send_str+="```"
+    send_str.format(count=num_d, q=s, sides=num_s, res=[x[1] for x in rolls])
+    await sent_msg.edit(send_str)
 
 bot.run(discord_token)
