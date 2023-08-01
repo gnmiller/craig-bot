@@ -210,17 +210,17 @@ async def roll(ctx, dice="1d20"):
     except Exception as e:
         num_d=1
         num_s=20
-    num_d = min(num_d,50)
-    num_s = min(num_s,100)
+    num_d = min(int(num_d),50)
+    num_s = min(int(num_s),100)
     rolls = cb_roll(int(num_d),int(num_s), db_file)
-    send_str = "```You rolled {count} {q} with {sides} sides.\nResults: {res}```"
+    send_str = "```You rolled {} {} with {} sides.\nResults: {}"
     if num_d == 1:
         s = "die"
     else:
         s = "dice"
-        send_str+="\nAverage: {avg}".format(cb_avg(rolls))
+        send_str+="\nAverage: {}".format(cb_avg(rolls))
     send_str+="```"
-    send_str.format(count=num_d, q=s, sides=num_s, res=[x[1] for x in rolls])
+    send_str = send_str.format(num_d,s,num_s,[x[1] for x in rolls])
     await sent_msg.edit(send_str)
 
 bot.run(discord_token)
