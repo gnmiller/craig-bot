@@ -57,7 +57,7 @@ class cb_youtube(commands.Cog):
     async def check_selection( self, ctx ):
         if len(ctx.content) > 1:
             return None
-        if ctx.user.id == config.bot_id:
+        if ctx.author.id == config.bot_id:
             return # dont respond to self
         cur_guild = config.guilds[ctx.guild.id]
         try: # check for existing searches

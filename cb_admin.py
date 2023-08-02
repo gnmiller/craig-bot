@@ -6,7 +6,7 @@ class cb_admin(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
 
-    async def _check_auth(self,user,auth):
+    def _check_auth(self,user,auth):
         """Check auth() for the user or any of their roles.
         auth should be a tuple of lists (admin_users,admin_groups)"""
         allow = False
@@ -22,19 +22,20 @@ class cb_admin(commands.Cog):
         return allow
     
     @commands.command()
-    async def kick(self,ctx,user,auth,reason="get punted!"):
-        if not self._check_auth(user,auth):
-            return None
-        send_str = "<@\{{}}\}> has been removed from the server"\
-                    " (kick) with reason {}".format(user.id,reason)
-        sent_msg = await ctx.send(send_str)
+    async def kick(self,ctx,user):
+        cur_guild = config.guilds[ctx.guild.id]
+        username = user.split()[0] # no funny business
+        auth = cur_guild.get_auth()
+        # if not self._check_auth(user,auth):
+        #     return None
+        sent_msg = await ctx.send(username)
         return sent_msg
     
     @commands.command()
-    async def talkback(self,ctx,user,auth):
-        if not self._check_auth(user,auth):
+    async def talkback(self,ctx,*,message):
+        cur_guild = config.guilds[ctx.guild.id]
+        auth = cur_guild.get_auth()
+        if not self._check_auth(ctx.author,auth):
             return None
-        send_str = ctx.content
-        sent_msg = "<@\{{}}\}> you said {}".format(user.id,ctx.content)
-        sent_msg = await ctx.send(send_str)
+        sent_msg = await ctx.send(f"{ctx.author.mention} you said {message}")
         return sent_msg

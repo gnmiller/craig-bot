@@ -28,12 +28,8 @@ class cb_guild:
         # TODO write out to DB
         return
 
-    def set_prof_filter( self, opt ):
-        self.data["prof_filter"] = str(bool(opt))
-        return bool(self.data["prof_filter"])
-    
-    def get_prof_filter( self ):
-        return bool(self.data["prof_filter"])
+    def get_auth( self ):
+        return (self.admin_users,self.admin_groups)
     
     # expects a discord.User object as user
     async def add_search( self, engine, user, guild, channel, parms, results, msg ):

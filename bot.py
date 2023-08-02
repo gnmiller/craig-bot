@@ -17,7 +17,6 @@ logfile = settings['bot']['logfile']
 # init
 intents = discord.Intents( messages = True, presences = True, guilds = True, 
                           members = True, reactions = True, message_content = True )
-#client = discord.Client(intents=intents)
 bot = commands.Bot(command_prefix=pfx,intents=intents)
 
 # logging
@@ -56,19 +55,11 @@ async def on_ready():
 
 @bot.event
 async def on_message( msg ):
-    pinged = False
     # @ mentions block
     if msg.author.id == config.bot_id:
         return # dont respond to self
     try:
-        for m in msg.mentions:
-            if m.id == config.bot_id:
-                pinged = True
-            pinged = True
-        if pinged == False:
-            res = await bot.process_commands(msg) # on_message() blocks the bot.commands() syntax unless we explicitly call this
-            return res
-        else:
+        if bot.user.mentioned_in(msg):
             # assume we want to query openAI
             prompt = msg.content
             msg_to_edit = await msg.channel.send("```Please hold while I commune with SkyNet.```")
@@ -76,6 +67,9 @@ async def on_message( msg ):
                                         openai_key=openai_token, db_file=db_file )
             await msg_to_edit.edit("```"+str(oai_resp.choices[0].message.content+"```"))
             return
+        else:
+            res = await bot.process_commands(msg) # on_message() blocks the bot.commands() syntax unless we explicitly call this
+            return res
     except Exception as e:
         print(e)
         return e
