@@ -131,60 +131,6 @@ def strip_user_id( message_text ):
         except AttributeError as e:
             raise RuntimeError("User ID sub-string not found in message text! Reccomend setting message text manually.")
         return ret
-    
- 
-def prompt_openai( in_text, user, openai_key, model="gpt-3.5-turbo", max_resp_len=200, db_file="craig-bot.sqlite" ):
-    """Interact with OpenAI's API."""
-    try: # if no id in message pass the raw message as input to chatgpt
-        prompt = strip_user_id( in_text )
-    except RuntimeError as e:
-        prompt = in_text
-    try:
-        openai.api_key = openai_key
-        data = [
-            {"role": "assistant", "content": "limit the response to {} characters or less".format(max_resp_len)},
-            {"role": "user", "content": "{}".format(prompt)}
-        ]    
-        response = openai.ChatCompletion.create(
-        model = model,
-        messages = data,
-        max_tokens = 256,
-        n = 1,
-        stop = None,
-        temperature = 0.5,
-        )
-        _log_ai_prompt( in_text, model, response, user.id, db_file, now() )
-        return response
-    except openai.error.InvalidRequestError as e:
-        print(e)
-        return None
-  
-# TODO implement this in the process for returning AI prompts
-def _log_ai_prompt( in_text, model, reply, user, db_file="craig-bot.sqlite", date=now(), ):
-    db_data = {
-            "prompt":in_text,
-            "model":model,
-            "resp":reply,
-            "uid":user,
-            "date":date,
-        }
-    try:
-        db = _check_db(db_file)
-        cur = db.cursor()
-        q = "INSERT INTO oai_cmds VALUES(\"{}\",\"{}\",\"{}\",\"{}\",\"{}\")".format(
-            db_data["prompt"],
-            db_data["model"],
-            db_data["resp"],
-            db_data['uid'],
-            db_data["date"])
-        res = cur.execute(q)
-        db.commit()
-        db.close()
-        return res
-    except Exception as e:
-        db.rollback()
-        db.close()
-        return None
        
 # always returns 1 if it catches an error
 def get_selection( text ):
@@ -208,7 +154,7 @@ def cb_roll(rollc, sides, db_file="craig-bot.sql"):
     random.seed()
     ret = []
     for i in range(1,rollc):
-        ret.append((sides,random.randint(0,sides)))
+        ret.append((sides,random.randint(1,sides)))
     _insert_roll(ret, db_file)
     return ret
 
