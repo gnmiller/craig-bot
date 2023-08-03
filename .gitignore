@@ -9,3 +9,5 @@ var/
 .vscode
 *.sqlite
 roadmap.*
+sql-envs
+Makefile

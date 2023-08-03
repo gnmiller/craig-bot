@@ -1,4 +1,4 @@
-import json, os, sqlite3, openai, re, ast, apiclient, random, statistics
+import os, sqlite3, openai, re, ast, apiclient, random, statistics
 from urllib.error import HTTPError
 from datetime import datetime
 from collections import OrderedDict
@@ -7,19 +7,6 @@ from cb_classes import cb_guild
 now = lambda : datetime.today().strftime('%Y-%m-%d') # YYYY-MM-DD
 dictify = lambda string: ast.literal_eval( string ) # turn a str thats a dict into an actual dict
 yt_uri = lambda string: "https://www.youtube.com/watch?v={}".format( string )
-
-def get_settings( file ):
-    """Load file as a json and return it"""
-    path = os.path.dirname( os.path.realpath( __file__ ))
-    try:
-        with open( '{}/{}'.format(path,file) ) as f:
-            settings = json.load( f )
-        f.close()
-        return settings
-    except FileNotFoundError as e:
-        print( "Settings file not found. Expecting: {}/settings.json", os.getwd() )
-        print( e )
-        return -1
 
 # put this in a file?
 prep_queries = [

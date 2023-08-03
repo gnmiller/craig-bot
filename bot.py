@@ -1,27 +1,18 @@
 import discord, logging, config
-import cb_youtube, cb_ai
+import cb_youtube, cb_ai, cb_sql
 import funcs # bot
 from discord.ext import commands
-
-# settings
-settings = funcs.get_settings( 'settings.json' )
-pfx = settings['bot']['prefix']
-discord_token = settings['discord']['token']
-youtube_token = settings['youtube']['token']
-openai_token = settings['openai']['token']
-db_file = settings['bot']['db_file']
-logfile = settings['bot']['logfile']
 
 # init
 intents = discord.Intents( messages = True, presences = True, guilds = True, 
                           members = True, reactions = True, message_content = True )
 #client = discord.Client(intents=intents)
-bot = commands.Bot(command_prefix=pfx,intents=intents)
+bot = commands.Bot(command_prefix=config.pfx,intents=intents)
 
 # logging
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename=logfile, encoding='utf-8', mode='w')
+handler = logging.FileHandler(filename=config.logfile, encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
@@ -30,25 +21,25 @@ logger.addHandler(handler)
 
 # generate a URI for inviting the bot to a server.
 def invite_uri():
-    if settings is None:
+    if config.settings is None:
         raise FileNotFoundError("settings not loaded!")
     else:
-        client_id = settings['discord']['app_id']
-        permissions = settings['bot']['perms']
+        client_id = config.settings['discord']['app_id']
+        permissions = config.settings['bot']['perms']
         scope = "bot%20applications.commands"
         ret = "https://discord.com/api/oauth2/authorize?client_id={}&permissions={}&scope={}".format(client_id,permissions,scope)
         return ret
 
 @bot.event
 async def on_ready():
-    funcs.init_db( db_file )
     config.bot_id = bot.user.id
     for g in bot.guilds:
         await g.me.edit(nick="BeeStingBot2.0")
-        t_guild = funcs.check_guild( g, db_file )
-        if not t_guild:
-            t_guild = funcs.insert_guild( g, data=None, db_file=db_file )
-        config.guilds[t_guild.guild_id] = t_guild
+        cb_sql.insert_guild(g,config.con_info)
+        cb_sql.set_user_auth(g,g.owner,bot.user,role="owner",db_info=config.con_info)
+        for role in g.roles:
+            if role.name.lower() == "administrator":
+                cb_sql.set_role_auth(g,role.id,config.bot_id)
     print(invite_uri())
     return
 
@@ -68,11 +59,11 @@ async def on_message( msg ):
             return res
         else:
             # assume we want to query openAI
-            prompt = msg.content
-            msg_to_edit = await msg.channel.send("```Please hold while I commune with SkyNet.```")
-            oai_resp = cb_ai.prompt_openai( in_text=prompt, user=msg.author,
-                                        openai_key=openai_token, db_file=db_file )
-            await msg_to_edit.edit("```"+str(oai_resp.choices[0].message.content+"```"))
+            #prompt = msg.content
+            #msg_to_edit = await msg.channel.send("```Please hold while I commune with SkyNet.```")
+            #oai_resp = cb_ai.prompt_openai( in_text=prompt, user=msg.author,
+            #                            openai_key=openai_token, db_file=db_file )
+            #await msg_to_edit.edit("```"+str(oai_resp.choices[0].message.content+"```"))
             return
     except Exception as e:
         print(e)
@@ -81,21 +72,13 @@ async def on_message( msg ):
 @bot.event
 async def on_guild_join( guild ):
     try:
-        row = funcs.check_guild( guild, db_file )
-        if row == None:
-            ret = funcs.insert_guild( guild, db_file )
-        else:
-           ret = None
-        return ret
-    except FileNotFoundError as e:
-        print(e)
-        return None
-
-async def getmsg( client, msg_id ):
-    msg = await client.fetch_message(msg_id)
-    return msg
-
-
+        cb_sql.insert_guild(guild)
+    except Exception as e:
+        raise(e)
+    
+@bot.event
+async def on_guild_leave( guild ):
+    try
 
 @bot.command(
         help = "Roll x dice y times. To avoid spam the max number of dice is 50 and the max" \
@@ -113,7 +96,7 @@ async def roll(ctx, dice="1d20"):
         num_s=20
     num_d = min(int(num_d),50)
     num_s = min(int(num_s),100)
-    rolls = funcs.cb_roll(int(num_d),int(num_s), db_file)
+    rolls = funcs.cb_roll(int(num_d),int(num_s), config.db_file)
     send_str = "```You rolled {} {} with {} sides.\nResults: {}"
     if num_d == 1:
         s = "die"
@@ -127,8 +110,9 @@ async def roll(ctx, dice="1d20"):
 @bot.command()
 @commands.is_owner()
 async def shutdown(ctx):
+    await ctx.send("goodbye")
     await ctx.bot.close()
 
-bot.add_cog(cb_youtube.cb_youtube(bot, youtube_token))
-bot.add_cog(cb_ai.cb_ai(bot, openai_token, db_file))
-bot.run(discord_token)
+bot.add_cog(cb_youtube.cb_youtube(bot, config.youtube_token))
+bot.add_cog(cb_ai.cb_ai(bot, config.openai_token, config.db_file))
+bot.run(config.discord_token)
