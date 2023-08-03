@@ -76,6 +76,9 @@ async def on_message(msg):
             #                            openai_key=openai_token, db_file=db_file )
             # await msg_to_edit.edit("```"+str(oai_resp.choices[0].message.content+"```"))
             return
+        else:
+            res = await bot.process_commands(msg) # on_message() blocks the bot.commands() syntax unless we explicitly call this
+            return res
     except Exception as e:
         print(e)
         return e
