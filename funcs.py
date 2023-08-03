@@ -2,6 +2,7 @@ import re
 import ast
 import random
 import statistics
+import cb_sql
 from datetime import datetime
 
 
@@ -26,19 +27,3 @@ def strip_user_id(msg):
         except AttributeError:
             raise RuntimeError("User ID sub-string not found in message text!")
         return ret
-
-
-def cb_roll(rollc, sides, db_file="craig-bot.sql"):
-    """Rolls a b-sided die a times.
-    Returns a tuple of (sides,result)"""
-    random.seed()
-    ret = []
-    for i in range(1, rollc):
-        ret.append((sides, random.randint(1, sides)))
-    return ret
-
-
-def cb_avg(rolls):
-    """Wrapper for statistics.mean()"""
-    data = [x[1] for x in rolls]
-    return int(statistics.mean(data))

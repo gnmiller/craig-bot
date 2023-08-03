@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS auth_roles (
 CREATE TABLE IF NOT EXISTS dice_data (
         `id` INTEGER PRIMARY KEY AUTO_INCREMENT UNIQUE,
         `guild_id` VARCHAR(64),
+		`user_id` VARCHAR(64),
         `num_sides` INTEGER,
         `result` INTEGER
 );            

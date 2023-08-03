@@ -21,7 +21,7 @@ def _connect_db(db_info=config.db_info):
 
 
 def _check_guild(guild, db_info=config.db_info):
-    if not isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError(f"got: {type(guild)} expected Guild")
     try:
         db = _connect_db(db_info)
@@ -46,7 +46,7 @@ def _check_guild(guild, db_info=config.db_info):
 
 
 def insert_guild(guild, db_info=config.db_info):
-    if isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError(f"insert_guild() got: {type(guild)} expected Guild")
     try:
         db = _connect_db(db_info)
@@ -69,7 +69,7 @@ def insert_guild(guild, db_info=config.db_info):
 
 
 def drop_guild(guild, db_info=config.db_info):
-    if not isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError(f"check_guild() got: {type(guild)} expected Guild")
     try:
         db = _connect_db(db_info)
@@ -94,7 +94,7 @@ def drop_guild(guild, db_info=config.db_info):
 
 def get_opt(guild, opt, db_info=config.db_info):
     """Returns a tuple of guild_id,opt_name,opt_val"""
-    if not isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError(f"get_opt() got: {type(guild)} expected Guild".format)
     try:
         db = _connect_db(db_info)
@@ -119,7 +119,7 @@ def get_opt(guild, opt, db_info=config.db_info):
 
 
 def set_opt(guild, opt, val, user, db_info=config.db_info):
-    if not isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError(f"set_opt() got: {type(guild)} expected Guild")
     cur_val = get_opt(guild, opt, db_info)
     try:
@@ -143,8 +143,8 @@ def set_opt(guild, opt, val, user, db_info=config.db_info):
 
 
 def get_auth(guild, user, db_info=config.db_info):
-    if not isinstance(guild, discord.Guild):
-        raise TypeError(f"get_auth() got: {type(guild)} expected discord.Guild")
+    if not isinstance(guild, discord.guild.Guild):
+        raise TypeError(f"get_auth() got: {type(guild)} expected Guild")
     if not isinstance(user, discord.user.ClientUser) \
         and not isinstance(user, discord.member.Member)\
             and not isinstance(user, test_classes.my_user):
@@ -165,7 +165,7 @@ def get_auth(guild, user, db_info=config.db_info):
 
 
 def _get_user_auth(guild, user, db_info=config.db_info):
-    if not isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError(f"get_user_auth() got: {type(guild)} expected Guild")
     if not isinstance(user, discord.user.ClientUser) \
             and not isinstance(user, discord.member.Member) \
@@ -187,7 +187,7 @@ def _get_user_auth(guild, user, db_info=config.db_info):
 
 
 def del_user_auth(guild, user, db_info=config.db_info):
-    if not isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError(f"del_user_auth() got: {type(guild)} expected Guild")
     if not isinstance(user, discord.user.ClientUser) \
             and not isinstance(user, discord.member.Member) \
@@ -215,7 +215,7 @@ def del_user_auth(guild, user, db_info=config.db_info):
 
 def set_user_auth(guild, user, added_by,
                   role="administrator", db_info=config.db_info):
-    if not isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError(f"set_user_auth() got: {type(guild)} expected Guild")
     if not isinstance(user, discord.user.ClientUser) \
             and not isinstance(user, discord.member.Member):
@@ -255,7 +255,7 @@ def set_user_auth(guild, user, added_by,
 
 
 def _get_role_auth(guild, role, db_info=config.db_info):
-    if not isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError("_get_role_auth() got: {type(guild)} expected Guild")
     if not isinstance(role, discord.role.Role):
         raise TypeError(f"_get_role_auth() got: {type(role)} expected str")
@@ -275,7 +275,7 @@ def _get_role_auth(guild, role, db_info=config.db_info):
 
 
 def set_role_auth(guild, role, added_by, db_info=config.db_info):
-    if not isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError(f"set_role_auth() got: {type(guild)} expected Guild")
     if not isinstance(role, discord.role.Role):
         raise TypeError(f"set_role_auth() got: {type(role)} expected str")
@@ -314,7 +314,7 @@ def set_role_auth(guild, role, added_by, db_info=config.db_info):
 
 
 def del_role_auth(guild, role, db_info=config.db_info):
-    if not isinstance(guild, discord.Guild):
+    if not isinstance(guild, discord.guild.Guild):
         raise TypeError("check_guild() got: {type(guild)} expected Guild")
     if not isinstance(role, discord.Role):
         raise TypeError(f"check_guild() got: {type(role)} Role")
@@ -338,6 +338,24 @@ def del_role_auth(guild, role, db_info=config.db_info):
     return perms
 
 
-def insert_roll(guild, rolls, db_info=config.db_info):
+def insert_roll(guild, user, rolls, db_info=config.db_info):
     if not isinstance(rolls, list):
         return
+    try:
+        db = _connect_db(db_info)
+    except Exception as e:
+        raise e
+    try:
+        for roll in rolls:
+            q = "INSERT INTO `dice_data`"\
+                " (`guild_id`,`user_id`,`num_sides`,`result`)"\
+                f" VALUES ({guild.id},{user.id},{roll[0]},{roll[1]})"
+            cur = db.cursor()
+            cur.execute(q)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()
+    return rolls

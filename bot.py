@@ -4,7 +4,8 @@ import config
 import cb_youtube
 import cb_ai
 import cb_sql
-import funcs  # bot
+import cb_admin
+import cb_dice
 from discord.ext import commands
 
 # init
@@ -76,9 +77,6 @@ async def on_message(msg):
             #                            openai_key=openai_token, db_file=db_file )
             # await msg_to_edit.edit("```"+str(oai_resp.choices[0].message.content+"```"))
             return
-        else:
-            res = await bot.process_commands(msg) # on_message() blocks the bot.commands() syntax unless we explicitly call this
-            return res
     except Exception as e:
         print(e)
         return e
@@ -104,44 +102,21 @@ async def on_command_error(ctx, error):
                        " on cooldown. No spamerino in the chaterino."
                        f" -- {error}.")
         return
+    await ctx.send(error)
     raise NotImplementedError
 
 
 @bot.command(
-        help="Roll x dice y times. To avoid spam the max number"
-             " of dice is 50 and the max number of sides is 100",
-        brief="Roll some dice",
-        usage="!roll [x] [y]\nRoll x dice y times."
+    help="Stop the bot. Owner only.",
+    brief="Stop the bot. Owner only."
 )
-@commands.cooldown(3, 30, commands.BucketType.user)
-async def roll(ctx, dice="1d20"):
-    sent_msg = await ctx.send("```Rattling the dice tower, one moment please.```")
-    try:
-        num_d = dice.split('d')[0]
-        num_s = dice.split('d')[1]
-    except Exception:
-        num_d = 1
-        num_s = 20
-    num_d = min(int(num_d), 50)
-    num_s = min(int(num_s), 100)
-    rolls = funcs.cb_roll(int(num_d), int(num_s), config.db_file)
-    send_str = "```You rolled {} {} with {} sides.\nResults: {}"
-    if num_d == 1:
-        s = "die"
-    else:
-        s = "dice"
-        send_str += "\nAverage: {}".format(funcs.cb_avg(rolls))
-    send_str += "```"
-    send_str = send_str.format(num_d, s, num_s, [x[1] for x in rolls])
-    await sent_msg.edit(content=send_str)
-
-
-@bot.command()
 @commands.is_owner()
 async def shutdown(ctx):
     await ctx.send("goodbye")
     await ctx.bot.close()
 
 bot.add_cog(cb_youtube.cb_youtube(bot, config.youtube_token))
-bot.add_cog(cb_ai.cb_ai(bot, config.openai_token, config.db_file))
+bot.add_cog(cb_ai.cb_ai(bot, config.openai_token))
+bot.add_cog(cb_admin.cb_admin(bot))
+bot.add_cog(cb_dice.cb_dice(bot))
 bot.run(config.discord_token)

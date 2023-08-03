@@ -4,10 +4,9 @@ import openai
 
 
 class cb_ai(commands.Cog, name="OpenAI"):
-    def __init__(self, bot, openai_api_key, db_file="craig-bot.sqlite"):
+    def __init__(self, bot, openai_api_key):
         self.bot = bot
         self.openai_token = openai_api_key
-        db_file = db_file
 
     def prompt_openai(self, in_text, user, openai_key,
                       model="gpt-3.5-turbo",
