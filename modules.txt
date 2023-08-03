@@ -3,4 +3,3 @@ openai
 google-api-python-client
 requests
 py-cord
-requests

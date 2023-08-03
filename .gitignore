@@ -11,3 +11,4 @@ var/
 roadmap.*
 sql-envs
 Makefile
+test.py
