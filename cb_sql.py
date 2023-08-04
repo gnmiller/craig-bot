@@ -58,6 +58,7 @@ def insert_guild(guild, db_info=config.db_info):
             return guild_info
         cur = db.cursor()
         q = "INSERT INTO `guilds` (`guild_id`,`guild_name`,`added`) VALUES (%s,%s,%s)"
+        # TODO insert help and announce chans
         cur.execute(q, (guild.id, guild.name, funcs.now()))
         db.commit()
         return _check_guild(guild, db_info)
@@ -336,26 +337,3 @@ def del_role_auth(guild, role, db_info=config.db_info):
     finally:
         db.close()
     return perms
-
-
-def insert_roll(guild, user, rolls, db_info=config.db_info):
-    if not isinstance(rolls, list):
-        return
-    try:
-        db = _connect_db(db_info)
-    except Exception as e:
-        raise e
-    try:
-        for roll in rolls:
-            q = "INSERT INTO `dice_data`"\
-                " (`guild_id`,`user_id`,`num_sides`,`result`)"\
-                f" VALUES ({guild.id},{user.id},{roll[0]},{roll[1]})"
-            cur = db.cursor()
-            cur.execute(q)
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise e
-    finally:
-        db.close()
-    return rolls

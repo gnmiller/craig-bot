@@ -6,6 +6,7 @@ import cb_ai
 import cb_sql
 import cb_admin
 import cb_dice
+import cb_init
 from discord.ext import commands
 
 # init
@@ -42,7 +43,24 @@ def invite_uri():
 async def on_ready():
     config.bot_id = bot.user.id
     for g in bot.guilds:
-        await g.me.edit(nick="BeeStingBot2.0")
+        await g.me.edit(nick=f"BeeStingBot {config.bee_emoji}")
+        activity = f"Servicing {len(bot.guilds)} bee-utiful"\
+                   f"servers. {config.bee_emoji}"
+        await bot.change_presence(status=discord.Status.online,
+                                  activity=discord.Game(name=activity))
+        if 'COMMUNITY' not in g.features:
+            temp_init = cb_init.init_view(bot, g)
+            desc = config.msg_owner_string.format(guild_name=g.name,
+                                                  guild_id=g.id)
+            embed = discord.Embed(title=f"Welcome to Bee Sting Bot 2.0 {config.bee_emoji}",
+                                  description=desc,
+                                  color=discord.Color.teal())
+            def check(msg): isinstance(msg.channel, discord.channel.DMChannel) \
+                and msg.author.id == g.owner.id
+            #  wait for 'reaction_add' or 'message'
+            events = []
+            await g.owner.send(embed=embed, view=temp_init)
+            #  TODO wait_for(click on view or reply)
         cb_sql.insert_guild(g, config.db_info)
         cb_sql.set_user_auth(g, g.owner, bot.user,
                              role="owner", db_info=config.db_info)

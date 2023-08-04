@@ -20,3 +20,7 @@ class cb_admin(commands.Cog):
             return None
         sent_msg = await ctx.send(f"{ctx.author.mention} you said {message}")
         return sent_msg
+
+    @commands.command()
+    async def authorize(self, ctx, *, message):
+        raise NotImplementedError

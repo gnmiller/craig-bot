@@ -29,6 +29,28 @@ db_info = {
     "port": settings['bot']['db']['port']
 }
 
+msg_owner_string = "Hello! A user has added this bot to a server that you own!\n"\
+                         "Server Name: {guild_name}\n"\
+                         "Server ID: {guild_id}\n"\
+                         "The bot requires the server be a Discord community. "\
+                         "This has a few side effects on your server!\n\n"\
+                         "First verified e-mail is required to enable communities"\
+                         "features.\n"\
+                         "Second media content from all users will be scanned and"\
+                         " purged if Discord believes it to be explicit (this"\
+                         " excludes age-restricted channels)\n\n"\
+                         "You may also want to enable several security"\
+                         "features on your server to protect your users.\n"\
+                         "These can be found under Server Settings -> Safety Setup\n\n"\
+                         "Finally communities require rules and announcement channels\n"\
+                         "The bot will automatically create these for you if you click "\
+                         "confirm below.\n\n"\
+                         "You may also respond to this DM with confirm rules announcement"\
+                         "Where rules and announcement correspond to the names of those"\
+                         "channels"
+
+bee_emoji = "🐝"
+
 
 class MissingValueError(Exception):
     def __init__(self, message, errors):

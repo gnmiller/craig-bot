@@ -1,6 +1,5 @@
 from discord.ext import commands
 import statistics
-import funcs
 import config
 import random
 import cb_sql
@@ -29,7 +28,7 @@ class cb_dice(commands.Cog):
         num_d = min(int(num_d), 50)
         num_s = ck_sides(num_s)
         rolls = cb_roll(int(num_d), int(num_s), config.db_file)
-        cb_sql.insert_roll(ctx.guild, ctx.author, rolls, config.db_info)
+        cb_dice.insert_roll(ctx.guild, ctx.author, rolls, config.db_info)
         send_str = "```You rolled {} {} with {} sides.\nResults: {}"
         if num_d == 1:
             s = "die"
@@ -67,3 +66,26 @@ def cb_avg(rolls):
     """Wrapper for statistics.mean()"""
     data = [x[1] for x in rolls]
     return int(statistics.mean(data))
+
+
+def insert_roll(guild, user, rolls, db_info=config.db_info):
+    if not isinstance(rolls, list):
+        return
+    try:
+        db = cb_sql._connect_db(db_info)
+    except Exception as e:
+        raise e
+    try:
+        for roll in rolls:
+            q = "INSERT INTO `dice_data`"\
+                " (`guild_id`,`user_id`,`num_sides`,`result`)"\
+                f" VALUES ({guild.id},{user.id},{roll[0]},{roll[1]})"
+            cur = db.cursor()
+            cur.execute(q)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()
+    return rolls
